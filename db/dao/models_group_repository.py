@@ -3,7 +3,7 @@ from typing import List, Optional
 from psycopg2 import sql
 from db.connection import get_db_connection
 from db.dao.models_repository import ModelsRepository
-from db.entities import models_group, ModelsGroup
+from db.entities import ModelsGroup
 from db.models import ModelsGroupRender
 from utils import get_logger, AESEncryptUtil
 
@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 
 class ModelsGroupRepository:
     def __init__(self):
-        self.table = models_group.__name__.split('.')[-1]
+        self.table = 'models_group'
 
     @classmethod
     def as_dependency(cls):

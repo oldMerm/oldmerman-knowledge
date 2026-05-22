@@ -4,7 +4,6 @@ from psycopg2 import sql
 
 from db.connection import get_db_connection
 from db.dao.common_repository import check_value_exists
-from db.entities import vector_collection as vc_entity
 from db.entities.vector_collection import VectorCollection
 from utils import get_logger
 
@@ -19,7 +18,7 @@ logger = get_logger(__name__)
 
 class VectorCollectionRepository:
     def __init__(self):
-        self.table = vc_entity.__name__.split('.')[-1]
+        self.table = 'vector_collection'
 
     @classmethod
     def as_dependency(cls):
@@ -40,7 +39,7 @@ class VectorCollectionRepository:
                 logger.warning(f"collection with id {collection_id} not found")
                 return None
 
-            return vc_entity.VectorCollection(
+            return VectorCollection(
                 id=row[0],
                 embedding_id=row[1],
                 collection_name=row[2],
@@ -62,7 +61,7 @@ class VectorCollectionRepository:
             rows = cur.fetchall()
 
             return [
-                vc_entity.VectorCollection(
+                VectorCollection(
                     id=row[0],
                     embedding_id=row[1],
                     collection_name=row[2],
@@ -86,7 +85,7 @@ class VectorCollectionRepository:
             rows = cur.fetchall()
 
             return [
-                vc_entity.VectorCollection(
+                VectorCollection(
                     id=row[0],
                     embedding_id=row[1],
                     collection_name=row[2],
@@ -164,18 +163,20 @@ class VectorCollectionRepository:
             logger.info(f"Collection:{collection_id} successfully updated")
             return True
 
-    def remove_collection(self, collection_id: int):
+    def remove_collection(self, collection_id: int) -> str:
         if check_value_exists(self.table, "id", collection_id) is False:
             logger.error(f"Collection with id {collection_id} does not exist")
             raise ValueError(f"Collection with id {collection_id} does not exist")
 
         with get_db_connection() as conn:
             cur = conn.cursor()
-            query = sql.SQL("DELETE FROM {} WHERE id = %s").format(
+            query = sql.SQL("DELETE FROM {} WHERE id = %s RETURNING collection_name").format(
                 sql.Identifier(self.table)
             )
             cur.execute(query, (collection_id,))
-            logger.info(f"Collection:{collection_id} successfully deleted")
+            collection_name = cur.fetchone()[0]
+            logger.info(f"Collection:{collection_name} successfully deleted")
+            return collection_name
 
     def remove_by_embedding(self, embedding_id: int):
         if check_value_exists(self.table, "embedding_id", embedding_id) is False:

@@ -4,7 +4,6 @@ from psycopg2 import sql
 
 from db.connection import get_db_connection
 from db.dao.common_repository import check_value_exists
-from db.entities import models
 from db.models import ModelRegisterParam
 from db.models.models_param import ModelRenderParam
 from utils import get_logger, AESEncryptUtil
@@ -21,7 +20,7 @@ logger = get_logger(__name__)
 
 class ModelsRepository:
     def __init__(self):
-        self.table = models.__name__.split('.')[-1]
+        self.table = 'models'
 
     @classmethod
     def as_dependency(cls):
@@ -73,7 +72,6 @@ class ModelsRepository:
                 )
                 for row in rows
             ]
-
 
     def insert_model(self,
                      model_name: str,
@@ -134,7 +132,6 @@ class ModelsRepository:
         return sql.SQL("DELETE FROM {} WHERE group_uuid = %s").format(
             sql.Identifier(self.table)
         )
-
 
 
 if __name__ == '__main__':

@@ -31,7 +31,7 @@ def _get_user_from_request(req: Request) -> Optional[str]:
 
 
 @router.get("/setting", response_model=Result[UserSettingParam])
-async def get_user_setting(req: Request, service: UserService = Depends(get_user_service)):
+def get_user_setting(req: Request, service: UserService = Depends(get_user_service)):
     user_uuid = _get_user_from_request(req)
     if not user_uuid:
         return Result.error(message="Unauthorized", code=401)
@@ -53,7 +53,7 @@ async def get_user_setting(req: Request, service: UserService = Depends(get_user
 
 
 @router.post("/setting", response_model=Result)
-async def update_user_setting(request: UpdateUsernameRequest,
+def update_user_setting(request: UpdateUsernameRequest,
                               req: Request,
                               service: UserService = Depends(get_user_service)):
     user_uuid = _get_user_from_request(req)

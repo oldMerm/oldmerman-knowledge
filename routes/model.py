@@ -24,7 +24,7 @@ router = APIRouter(prefix="/model", tags=["model"])
 
 
 @router.get("/render")
-async def get_render_model(group_uuid: str = Param(description="模型所属分组uuid"),
+def get_render_model(group_uuid: str = Param(description="模型所属分组uuid"),
                            service: ModelService = Depends(get_model_service)) -> Result[List[ModelRenderParam]]:
     return Result.success(
         data=service.get_group_models(group_uuid)
@@ -32,7 +32,7 @@ async def get_render_model(group_uuid: str = Param(description="模型所属分�
 
 
 @router.post("")
-async def add_model(request: Request,
+def add_model(request: Request,
                     dto: ModelCreateParam = Body(description="创建模型所需参数体"),
                     service: ModelService = Depends(get_model_service)):
     user_uuid = getattr(request.state.user, "user_id", None)
@@ -42,7 +42,7 @@ async def add_model(request: Request,
 
 
 @router.delete("")
-async def delete_model(model_id: int = Param(description="模型唯一id"),
+def delete_model(model_id: int = Param(description="模型唯一id"),
                        service: ModelService = Depends(get_model_service)):
     return Result.success(
         data=service.delete_model(model_id)

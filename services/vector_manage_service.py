@@ -47,13 +47,18 @@ class VectorManageService:
         try:
             self.__vector_client.create_collection(
                 name=collection_name,
-                metadata=dto.to_metadata()
+                metadata=dto.to_metadata(),
             )
         except ValueError:
             self.__mapper.remove_collection(collection_id)
-            raise ValueError(f"collection added fail, because the collection_name is exist in vector database")
+            raise ValueError(f"collection added fail, because collection_name:{collection_name} is exist in vector database")
 
         return collection_id
+
+    def remove_collection(self, collection_id: int):
+        collection_name = self.__mapper.remove_collection(collection_id=collection_id)
+        self.__vector_client.delete_collection(collection_name)
+        logger.info(f"remove collection:{collection_name} success")
 
 def get_vector_manage_service(
         vector_dao: VectorCollectionRepository = Depends(),

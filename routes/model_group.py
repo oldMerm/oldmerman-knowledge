@@ -24,7 +24,7 @@ router = APIRouter(prefix="/model_group", tags=["model_group"])
 
 
 @router.get("/render")
-async def get_all_group(service: ModelManageService = Depends(get_model_manage_service)
+def get_all_group(service: ModelManageService = Depends(get_model_manage_service)
                         ) -> Result[List[ModelsGroupRender]]:
     return Result.success(
         data=service.get_render_group()
@@ -32,7 +32,7 @@ async def get_all_group(service: ModelManageService = Depends(get_model_manage_s
 
 
 @router.get("")
-async def get_model_group(group_uuid: Optional[str] = None,
+def get_model_group(group_uuid: Optional[str] = None,
                           service: ModelManageService = Depends(get_model_manage_service)
                           ) -> Result[ModelsGroup]:
     return Result.success(
@@ -41,7 +41,7 @@ async def get_model_group(group_uuid: Optional[str] = None,
 
 
 @router.post("")
-async def create_group(dto: ModelsGroupCreateParam,
+def create_group(dto: ModelsGroupCreateParam,
                        service: ModelManageService = Depends(get_model_manage_service)
                        ) -> Result[str]:
     return Result.success(
@@ -50,7 +50,7 @@ async def create_group(dto: ModelsGroupCreateParam,
 
 
 @router.delete("")
-async def delete_group(group_uuid: str,
+def delete_group(group_uuid: str,
                        service: ModelManageService = Depends(get_model_manage_service)
                        ) -> Result[int]:
     return Result.success(

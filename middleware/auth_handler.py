@@ -28,6 +28,7 @@ EXCLUDED_PATHS = [
 EXCLUDED_PATH_PREFIXES = [
     # "/model_group",
     # "/model",
+    "/model_type"
 ]
 
 class AuthMiddleware(BaseHTTPMiddleware):

@@ -26,12 +26,12 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.get("/verify", response_model=Result)
-async def verify():
+def verify():
     return Result.success(message="success")
 
 
 @router.post("/register", response_model=Result[LoginResponse])
-async def register(request: RegisterRequest,
+def register(request: RegisterRequest,
                    req: Request,
                    service: AuthService = Depends(get_auth_service)):
     logger.info(f"Register attempt: {request.username}")
@@ -54,7 +54,7 @@ async def register(request: RegisterRequest,
 
 
 @router.post("/login", response_model=Result[LoginResponse])
-async def login(request: LoginRequest,
+def login(request: LoginRequest,
                 req: Request,
                 service: AuthService = Depends(get_auth_service)):
     logger.info(f"Login attempt: {request.username}")
@@ -68,6 +68,6 @@ async def login(request: LoginRequest,
 
 
 @router.post("/logout", response_model=Result)
-async def logout(service: AuthService = Depends(get_auth_service)):
+def logout(service: AuthService = Depends(get_auth_service)):
     service.logout()
     return Result.success(message="Logged out successfully")

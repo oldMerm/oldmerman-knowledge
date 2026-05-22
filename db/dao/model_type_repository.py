@@ -4,8 +4,8 @@ from psycopg2 import sql
 
 from db.connection import get_db_connection
 from db.dao.common_repository import check_value_exists
-from db.entities import model_type
 from db.entities.model_type import ModelType
+from db.models import ModelsWithTypeParam, ModelRenderParam1
 from utils import get_logger
 
 """Description
@@ -19,8 +19,12 @@ logger = get_logger(__name__)
 
 
 class ModelTypeRepository:
+    # cache about database colum
+    _vector_model_type_id = None
+
     def __init__(self):
-        self.table = model_type.__name__.split('.')[-1]
+        self.table = 'model_type'
+        self.link_table = 'model_type_link'
 
     @classmethod
     def as_dependency(cls):
@@ -79,6 +83,40 @@ class ModelTypeRepository:
                 )
                 for row in rows
             ]
+
+    def select_all_vector_model(self):
+        with get_db_connection() as conn:
+            cur = conn.cursor()
+            model_type_name = '向量模型'
+
+            if self._vector_model_type_id is None:
+                query = sql.SQL("SELECT id FROM model_type WHERE model_type_name = %s")
+                cur.execute(query, (model_type_name,))
+                row = cur.fetchone()
+                self._vector_model_type_id = row[0] if row else None
+
+            type_id = self._vector_model_type_id
+
+            query = sql.SQL("SELECT m.id, m.model_name FROM models m "
+                            "INNER JOIN {} mtl ON m.id = mtl.model_id "
+                            "WHERE mtl.type_id = %s ").format(
+                sql.Identifier(self.link_table)
+            )
+            cur.execute(query, (type_id,))
+            rows = cur.fetchall()
+
+            return ModelsWithTypeParam(
+                type_id=type_id,
+                type_name=model_type_name,
+                models=[
+                    ModelRenderParam1(
+                        model_id=row[0],
+                        model_name=row[1]
+                    )
+                    for row in rows
+                ]
+            )
+
 
     def delete_by_id(self, type_id: int) -> bool:
         with get_db_connection() as conn:
