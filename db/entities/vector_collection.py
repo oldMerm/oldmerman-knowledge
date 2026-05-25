@@ -12,6 +12,7 @@ class VectorCollection:
     collection_description: Optional[str] = None
     items_number: Optional[int] = None
     created_at: datetime = field(default_factory=datetime.now)
+    dimensions: Optional[int] = 1024
 
     def to_dict(self) -> dict:
         return {
@@ -21,6 +22,7 @@ class VectorCollection:
             "collection_alias": self.collection_alias,
             "collection_description": self.collection_description,
             "items_number": self.items_number,
+            "dimensions": self.dimensions,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 

@@ -19,8 +19,6 @@ logger = get_logger(__name__)
 
 
 class ModelTypeRepository:
-    # cache about database colum
-    _vector_model_type_id = None
 
     def __init__(self):
         self.table = 'model_type'
@@ -84,18 +82,17 @@ class ModelTypeRepository:
                 for row in rows
             ]
 
-    def select_all_vector_model(self):
+    def select_type_models(self, type_name: str):
         with get_db_connection() as conn:
             cur = conn.cursor()
-            model_type_name = '向量模型'
 
-            if self._vector_model_type_id is None:
-                query = sql.SQL("SELECT id FROM model_type WHERE model_type_name = %s")
-                cur.execute(query, (model_type_name,))
-                row = cur.fetchone()
-                self._vector_model_type_id = row[0] if row else None
+            query = sql.SQL("SELECT id FROM model_type WHERE model_type_name = %s")
+            cur.execute(query, (type_name,))
+            row = cur.fetchone()
 
-            type_id = self._vector_model_type_id
+            if row[0] is None:
+                return None
+            type_id = row[0]
 
             query = sql.SQL("SELECT m.id, m.model_name FROM models m "
                             "INNER JOIN {} mtl ON m.id = mtl.model_id "
@@ -107,7 +104,7 @@ class ModelTypeRepository:
 
             return ModelsWithTypeParam(
                 type_id=type_id,
-                type_name=model_type_name,
+                type_name=type_name,
                 models=[
                     ModelRenderParam1(
                         model_id=row[0],
@@ -130,3 +127,7 @@ class ModelTypeRepository:
                 return True
             logger.warning(f"ModelType with id {type_id} not found for deletion")
             return False
+
+if __name__ == "__main__":
+    dao = ModelTypeRepository()
+    print(dao.select_type_models('向量模型'))

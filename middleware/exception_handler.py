@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
-from common.Result import Result
+from common.Result import Result, BusinessException
 
 """Description
 The exception handler about the project 
@@ -10,6 +10,16 @@ The exception handler about the project
 Date: 2026-4-22
 Created by oldmerman
 """
+
+async def business_exception_handler(request: Request, exc: BusinessException) -> JSONResponse:
+    return JSONResponse(
+        status_code=exc.code,
+        content=Result.error(
+            message=exc.message,
+            code=exc.code,
+            request=str(request.url.path)
+        ).model_dump(),
+    )
 
 
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
@@ -46,6 +56,7 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
 
 
 def register_exception_handlers(app: FastAPI):
+    app.add_exception_handler(BusinessException, business_exception_handler)
     app.add_exception_handler(HTTPException, http_exception_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
     app.add_exception_handler(Exception, general_exception_handler)

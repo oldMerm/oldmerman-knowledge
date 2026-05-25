@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     # chromadb
     VECTOR_PERSIST_URL: str = Field(default=r"D:\chromadb", alias="VECTOR_PERSIST_URL")
 
+    # 文档策略
+    MAX_FILE_SIZE: int = 10 * 1024 * 1024 # 10MB
+    MAX_CHUNK_SIZE: int = 50 * 1024 # 50KB
+
 @lru_cache()
 def get_settings() -> Settings:
     return Settings()

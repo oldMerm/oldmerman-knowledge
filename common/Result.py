@@ -30,3 +30,8 @@ class Result(BaseModel, Generic[T]):
             time=datetime.now().isoformat(),
             request=request
         )
+
+class BusinessException(Exception):
+    def __init__(self, message: str, code: int = 400):
+        self.message = message
+        self.code = code

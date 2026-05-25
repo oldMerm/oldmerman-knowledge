@@ -8,6 +8,7 @@ from common.Result import Result
 from db.models.user_param import UserSettingParam
 from services import get_user_service
 from services.user_service import UserService
+from utils import UserContext
 from utils.logger import get_logger
 
 """Description
@@ -26,13 +27,12 @@ class UpdateUsernameRequest(BaseModel):
     username: str
 
 
-def _get_user_from_request(req: Request) -> Optional[str]:
-    return getattr(req.state.user, "user_id", None)
+
 
 
 @router.get("/setting", response_model=Result[UserSettingParam])
 def get_user_setting(req: Request, service: UserService = Depends(get_user_service)):
-    user_uuid = _get_user_from_request(req)
+    user_uuid = UserContext.get_user_id(req)
     if not user_uuid:
         return Result.error(message="Unauthorized", code=401)
 
@@ -56,7 +56,7 @@ def get_user_setting(req: Request, service: UserService = Depends(get_user_servi
 def update_user_setting(request: UpdateUsernameRequest,
                               req: Request,
                               service: UserService = Depends(get_user_service)):
-    user_uuid = _get_user_from_request(req)
+    user_uuid = UserContext.get_user_id(req)
     if not user_uuid:
         return Result.error(message="Unauthorized", code=401)
 

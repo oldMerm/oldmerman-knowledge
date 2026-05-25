@@ -1,3 +1,3 @@
-from .Result import Result
+from .Result import Result, BusinessException
 
-__all__ = ["Result"]
+__all__ = ["Result", "BusinessException"]

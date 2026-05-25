@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import List, Optional
 
 from fastapi.params import Depends
 
@@ -26,8 +26,10 @@ class ModelTypeService:
     def select_all_type(self):
         return self.__mapper.select_all()
 
-    def select_all_vector_model(self):
-        models: List[ModelsWithTypeParam] = self.__mapper.select_all_vector_model()
+    def select_type_models(self, type_name: Optional[str]):
+        if type_name is None:
+            return None
+        models: List[ModelsWithTypeParam] = self.__mapper.select_type_models(type_name)
         return models
 
     def insert_type(self, model_type_name):

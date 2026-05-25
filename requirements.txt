@@ -2,10 +2,14 @@ pydantic
 fastapi
 langchain>=1.2.15
 langchain-openai
+langchain-text-splitters
 langgraph>=1.1.8
+python-multipart>=0.0.29
 python-dotenv>=1.0.0
 psycopg2-binary>=2.9.9
 pyjwt>=2.12.1
 bcrypt>=4.0.0
 chromadb>=1.5.9
 zai-sdk>=0.2.2
+pypdf2>=3.0.1
+python-docx>=1.2.0

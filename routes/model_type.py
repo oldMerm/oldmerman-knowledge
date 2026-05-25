@@ -1,7 +1,7 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter
-from fastapi.params import Depends
+from fastapi.params import Depends, Param
 
 from common import Result
 from db.entities import ModelType
@@ -21,30 +21,35 @@ logger = get_logger(__name__)
 
 router = APIRouter(prefix="/model_type", tags=["model_type"])
 
+
 @router.get("/all")
 def get_all(service: ModelTypeService = Depends(get_model_type_service)
-                  ) -> Result[List[ModelType]]:
+            ) -> Result[List[ModelType]]:
     return Result.success(
         data=service.select_all_type()
     )
 
+
 @router.get("/vector-models")
-def select_all_vector_model(service: ModelTypeService = Depends(get_model_type_service)
+def select_type_models(type_name: Optional[str] = Param(description="要查询的模型名称"),
+                            service: ModelTypeService = Depends(get_model_type_service)
                             ) -> Result[ModelsWithTypeParam]:
     return Result.success(
-        data=service.select_all_vector_model()
+        data=service.select_type_models(type_name)
     )
 
+
 @router.post("")
-def insert_type(model_type_name : str,
-                      service: ModelTypeService = Depends(get_model_type_service)
-                      ) -> Result:
+def insert_type(model_type_name: str,
+                service: ModelTypeService = Depends(get_model_type_service)
+                ) -> Result:
     service.insert_type(model_type_name)
     return Result.success()
 
+
 @router.delete("")
 def delete_type(type_id: int,
-                      service: ModelTypeService = Depends(get_model_type_service)
-                      ) -> Result:
+                service: ModelTypeService = Depends(get_model_type_service)
+                ) -> Result:
     service.delete_type(type_id)
     return Result.success()
