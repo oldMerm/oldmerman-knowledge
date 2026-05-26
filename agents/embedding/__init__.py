@@ -1,4 +1,4 @@
-from .embedding_provider import get_embeddings_supported, EmbeddingsGetterParam
+from .embedding_provider import get_embeddings_supported, EmbeddingsGetterParam, zhi_pu_embedding
 
 # 如何选择切分器？
 # 任务场景 | 首选切分器 | 理由
@@ -10,6 +10,6 @@ from .embedding_provider import get_embeddings_supported, EmbeddingsGetterParam
 
 
 __all__ = [
-    "get_embeddings_supported", "EmbeddingsGetterParam"
+    "get_embeddings_supported", "EmbeddingsGetterParam", "zhi_pu_embedding"
 ]
 

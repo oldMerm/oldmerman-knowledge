@@ -1,9 +1,10 @@
-from config import Settings
 import io
 import re
 from typing import List, Dict, Any
 from docx import Document
 import PyPDF2
+
+from config import get_settings
 
 """Description
 Supports txt,md,pdf,docs files processing(discard picture)
@@ -13,6 +14,8 @@ chunk_size ref to "config/settings.py"
 Date: 2026-5-25
 Created by oldmerman
 """
+
+settings = get_settings()
 
 def extract_text_from_docx(file_bytes: bytes) -> str:
     """从 docx 提取纯文本"""
@@ -52,10 +55,8 @@ def extract_text(file_bytes: bytes, filename: str) -> str:
     """
     filename_lower = filename.lower()
 
-    if filename_lower.endswith('.txt'):
+    if filename_lower.endswith('.txt') or filename_lower.endswith('.md'):
         return extract_text_from_txt(file_bytes)
-    elif filename_lower.endswith('.md'):
-        return extract_text_from_md(file_bytes, remove_images=True)
     elif filename_lower.endswith('.docx'):
         return extract_text_from_docx(file_bytes)
     elif filename_lower.endswith('.pdf'):
@@ -74,7 +75,7 @@ def split_to_chunks(file_bytes: bytes, filename: str) -> List[Dict[str, Any]]:
     Returns:
         块列表，每个块包含 bytes 内容和元数据
     """
-    CHUNK_SIZE = Settings.MAX_CHUNK_SIZE  # 50KB
+    CHUNK_SIZE = settings.MAX_CHUNK_SIZE  # 50KB
 
     # 1. 提取纯文本
     text = extract_text(file_bytes, filename)
@@ -99,7 +100,9 @@ def split_to_chunks(file_bytes: bytes, filename: str) -> List[Dict[str, Any]]:
     return chunks
 
 if __name__ == "__main__":
-    with open(r"C:\Users\asus\Desktop\博客部署\文章\合集之LangChain\agent模块之记忆系统\agent模块之记忆系统.md",
+    with open(r"C:\Users\asus\Desktop\博客部署\文章\java并发.md",
               'rb') as file:
         content = file.read()
-        print(extract_text(content, "agent模块之记忆系统.md"))
+        for chunk in split_to_chunks(content, "java并发.md"):
+            print(f"chunk_name: {chunk["name"]}")
+            print(f"text_split: {chunk["text"][0:300]}")

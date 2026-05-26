@@ -1,9 +1,7 @@
 import os
-from typing import Optional
 
 from fastapi import APIRouter, Request
 from fastapi.params import Depends
-from pydantic import BaseModel
 
 from dotenv import load_dotenv
 from common.Result import Result

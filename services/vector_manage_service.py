@@ -1,3 +1,10 @@
+"""Description
+The bus code about vector manage
+
+Date: 2026-5-19
+Created by oldmerman
+"""
+
 from uuid import uuid4
 from typing import List, Any
 
@@ -6,7 +13,7 @@ from fastapi import UploadFile
 from fastapi.params import Depends
 
 from common import BusinessException
-from config import Settings
+from config import get_settings
 from db import get_vector_database
 from db.dao import VectorCollectionRepository
 from db.entities import VectorCollection
@@ -17,14 +24,8 @@ from utils.logger import get_logger
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 
-"""Description
-The bus code about vector manage
-
-Date: 2026-5-19
-Created by oldmerman
-"""
-
 logger = get_logger(__name__)
+settings = get_settings()
 
 
 class VectorManageService:
@@ -35,18 +36,11 @@ class VectorManageService:
         self.__mapper = vector_dao
         self.__vector_client = vector_client
 
-    # 对每个chunk进行向量化
-    async def __embeddings(self, separators, metadatas, file_content, collection_name) -> List[str]:
-        # 文档切分器
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=500,
-            chunk_overlap=50,
-            separators=separators
-        )
-
+    # 对每个chunk(小于50KB)进行向量化
+    async def __embeddings(self, splitter, metadatas, file_content, collection_name, doc_id) -> List[str]:
         original_doc = Document(
             page_content=file_content,
-            metadatas=metadatas
+            metadata=metadatas
         )
         doc_chunks = splitter.split_documents([original_doc])  # 切分
 
@@ -54,40 +48,56 @@ class VectorManageService:
         batch_texts = [chunk.page_content for chunk in doc_chunks]  # 文档分块数据
         batch_metadatas = [chunk.metadata for chunk in doc_chunks]  # 分块的元数据
 
-        return await self.__mapper.upload(
+        return await self.__mapper.embeddings(
             collection_name=collection_name,
             ids=batch_ids,
             texts=batch_texts,
-            metadatas=batch_metadatas
+            metadatas=batch_metadatas,
+            doc_id=doc_id
         )
 
     async def upload(self, user_id: str, collection_name: str, metadatas: dict[str, Any],
                      file: UploadFile, language: str) -> dict[str, List[str]]:
+        if user_id is None:
+            raise BusinessException("Invalid param because userId is None")
+
+        # 文件处理逻辑
+        original_content = await file.read()
+        filename = file.filename
+        file_size = len(original_content)
+        if file_size > settings.MAX_FILE_SIZE:
+            raise BusinessException("The uploaded file exceeds 10MB")
+        # 记录文件并返回访问id
+        doc_id = self.__mapper.insert_document(user_id, filename, file_size)
+
+        # 开始向量化流程
+        # 获取对应语言切分策略符号的优先级
         separators = language_separators[language]
         if separators is None:
             raise BusinessException(f"Not supported language {language}")
 
-        if user_id is None:
-            raise BusinessException("Invalid param because userId is None")
-
-        filename = file.filename
+        # 文档切分器(根据标点符号优先级)
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=500,
+            chunk_overlap=50,
+            separators=separators
+        )
+        # 元数据封装
         metadatas["author"] = user_id
         metadatas["filename"] = filename
-        metadatas["content_type"] = file.content_type
 
         ids: dict[str, List[str]] = {}
         docs_count_group = 1
-        original_content = await file.read()
-        # 若占用小于最大的chunk_size, 直接向量化
-        if len(original_content) < Settings.MAX_CHUNK_SIZE:
+        if file_size < settings.MAX_CHUNK_SIZE:
+            # 若占用小于最大的chunk_size, 直接向量化
             text = extract_text(original_content, filename)
-            ids["doc"+str(docs_count_group)] = await self.__embeddings(separators, metadatas, text, collection_name)
+            ids["doc" + str(docs_count_group)] = await self.__embeddings(splitter, metadatas, text, collection_name, doc_id)
         else:
             # 否则切块进行向量化
             chunks = split_to_chunks(original_content, filename)
             for chunk in chunks:
                 metadatas["file_chunk_name"] = chunk["name"]
-                ids["doc"+str(docs_count_group)] = await self.__embeddings(separators, metadatas, chunk["text"], collection_name)
+                ids["doc" + str(docs_count_group)] = await self.__embeddings(splitter, metadatas, chunk["text"], collection_name, doc_id)
                 docs_count_group += 1
         return ids
 

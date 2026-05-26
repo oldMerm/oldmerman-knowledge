@@ -18,6 +18,9 @@ Created by oldmerman
 logger = get_logger(__name__)
 
 
+# TODO: 注册时使用默认值则有问题
+
+
 class ModelsRepository:
     def __init__(self):
         self.table = 'models'

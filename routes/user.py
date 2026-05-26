@@ -1,11 +1,9 @@
-from typing import Optional
-
 from fastapi import APIRouter, Request
 from fastapi.params import Depends
 from pydantic import BaseModel
 
 from common.Result import Result
-from db.models.user_param import UserSettingParam
+from db.models.user_param import UserSettingParam, UpdateUsernameRequest
 from services import get_user_service
 from services.user_service import UserService
 from utils import UserContext
@@ -21,13 +19,6 @@ Created by oldmerman
 logger = get_logger(__name__)
 
 router = APIRouter(prefix="/user", tags=["user"])
-
-
-class UpdateUsernameRequest(BaseModel):
-    username: str
-
-
-
 
 
 @router.get("/setting", response_model=Result[UserSettingParam])
@@ -54,8 +45,8 @@ def get_user_setting(req: Request, service: UserService = Depends(get_user_servi
 
 @router.post("/setting", response_model=Result)
 def update_user_setting(request: UpdateUsernameRequest,
-                              req: Request,
-                              service: UserService = Depends(get_user_service)):
+                        req: Request,
+                        service: UserService = Depends(get_user_service)):
     user_uuid = UserContext.get_user_id(req)
     if not user_uuid:
         return Result.error(message="Unauthorized", code=401)

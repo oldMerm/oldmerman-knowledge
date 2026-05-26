@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 import routes
-from config import Settings, get_settings
+from config import get_settings
 from utils.logger import get_logger
 from middleware import AuthMiddleware
 from middleware.response_handler import ResponseWrapperMiddleware

@@ -1,25 +1,26 @@
-import hashlib
-import json
-from typing import List, Optional
-
-from psycopg2.extras import execute_values
-
-from psycopg2 import sql
-
-from agents.embedding import get_embeddings_supported
-from db import get_vector_database
-from db.connection import get_db_connection
-from db.dao import ModelsRepository
-from db.dao.common_repository import check_value_exists
-from db.entities.vector_collection import VectorCollection
-from utils import get_logger
-
 """Description
 the sql to manage table named "vector_connection"
 
 Date: 2026-5-19
 Created by oldmerman
 """
+
+import hashlib
+import json
+from typing import List, Optional
+from uuid import uuid4
+
+from psycopg2.extras import execute_values
+
+from psycopg2 import sql
+
+from agents.embedding import get_embeddings_supported, EmbeddingsGetterParam
+from db import get_vector_database
+from db.connection import get_db_connection
+from db.dao import ModelsRepository
+from db.dao.common_repository import check_value_exists
+from db.entities.vector_collection import VectorCollection
+from utils import get_logger
 
 logger = get_logger(__name__)
 
@@ -28,18 +29,21 @@ def _compute_hash(text):
     """计算文档内容的SHA256哈希"""
     return hashlib.sha256(text.encode('utf-8')).hexdigest()
 
+# TODO: 修改文档条数逻辑没有添加
+# TODO: 创建集合需要判空
 
 class VectorCollectionRepository:
     def __init__(self):
         self.table = 'vector_collection'
         self.metadata_table = 'vector_metadata'
+        self.document_table = 'documents'
         self.vector_client = get_vector_database()
 
     @classmethod
     def as_dependency(cls):
         return cls()
 
-    def _add_batch_new(self, collection_name, ids, texts, metadatas, content_hashes):
+    def _add_batch_new(self, collection_name, ids, texts, metadatas, content_hashes, doc_id):
         """
         批量插入新文档到数据库
         """
@@ -50,7 +54,14 @@ class VectorCollectionRepository:
 
         embedding_id = collection.metadata.get("embedding_id")
         model_param = ModelsRepository().select_model(embedding_id)
-        embeddings = get_embeddings_supported(model_param.api_key, model_param.base_url, texts)
+        param = EmbeddingsGetterParam(
+            api_key=model_param.api_key,
+            base_url=model_param.base_url,
+            model_name=model_param.model_name,
+            dimensions=collection.metadata.get("dimensions") or 1024,
+            doc=texts
+        )
+        embeddings = get_embeddings_supported(param)
 
         collection.add(
             ids=ids,
@@ -58,31 +69,29 @@ class VectorCollectionRepository:
             documents=texts,
             metadatas=metadatas,
         )
-
         with get_db_connection() as conn:
             cur = conn.cursor()
             # 准备批量插入的数据
             insert_data = []
-            for doc_id, text, metadata, content_hash in zip(ids, texts, metadatas, content_hashes):
+            for chunk_id, text, metadata, content_hash in zip(ids, texts, metadatas, content_hashes):
                 insert_data.append((
-                    doc_id,
+                    chunk_id,
                     collection_name,
-                    text,
+                    content_hash,
                     json.dumps(metadata) if metadata else None,
-                    content_hash
+                    doc_id
                 ))
             # 批量插入
             execute_values(cur, f"""
                 INSERT INTO {self.metadata_table} 
-                (id, collection_name, document_text, metadata, content_hash)
+                (id, collection_name, content_hash, metadata, doc_id)
                 VALUES %s
             """, insert_data)
             conn.commit()
 
-    async def upload(self, collection_name, ids, texts, metadatas) -> List[str]:
+    async def embeddings(self, collection_name, ids, texts, metadatas, doc_id) -> List[str]:
         if not ids:
             return []
-
         # 1. 批量计算所有文档的 hash
         content_hashes = []
         for text in texts:
@@ -110,16 +119,16 @@ class VectorCollectionRepository:
         new_metadatas = []
         new_hashes = []
 
-        for doc_id, text, metadata, content_hash in zip(ids, texts, metadatas, content_hashes):
+        for chunk_id, text, metadata, content_hash in zip(ids, texts, metadatas, content_hashes):
             if content_hash not in existing_hashes:
-                new_ids.append(doc_id)
+                new_ids.append(chunk_id)
                 new_texts.append(text)
                 new_metadatas.append(metadata)
                 new_hashes.append(content_hash)
 
         # 4. 批量插入新文档
         if new_ids:
-            self._add_batch_new(collection_name, new_ids, new_texts, new_metadatas, new_hashes)
+            self._add_batch_new(collection_name, new_ids, new_texts, new_metadatas, new_hashes, doc_id)
 
         # 返回成功上传的ID
         return new_ids
@@ -245,6 +254,17 @@ class VectorCollectionRepository:
 
         return collection_id
 
+    def insert_document(self, user_id, filename, file_size):
+        with get_db_connection() as conn:
+            cur = conn.cursor()
+            query = sql.SQL("""INSERT INTO {} (user_id, filename, filesize)
+                               VALUES (%s, %s, %s) RETURNING id """).format(
+                sql.Identifier(self.document_table)
+            )
+            cur.execute(query, (user_id, filename, file_size))
+            return cur.fetchone()[0]
+
+    # =========== 以下函数暂不使用 ============
     def update_collection(self,
                           collection_id: int,
                           collection_alias: str = None,
@@ -316,4 +336,5 @@ class VectorCollectionRepository:
 
 if __name__ == '__main__':
     vr = VectorCollectionRepository()
-    vr.insert_collection(collection_name="oldmerman", collection_alias="merman", collection_description="so cool")
+    res = vr.insert_document(str(uuid4()), "0基础入门agent系统.md", 3 * 1024 * 1024)
+    print(res)

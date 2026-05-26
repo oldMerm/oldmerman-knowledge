@@ -1,15 +1,15 @@
-from langchain_core.language_models import BaseChatModel
-from langchain_openai import ChatOpenAI
-
-from db.dao.models_repository import ModelsRepository
-from utils import get_logger
-
 """Description
 Model Initialization
 
 Date: 2026-4-29
 Created by oldmerman
 """
+
+from langchain_core.language_models import BaseChatModel
+from langchain_openai import ChatOpenAI
+
+from db.dao.models_repository import ModelsRepository
+from utils import get_logger
 
 logger = get_logger(__name__)
 

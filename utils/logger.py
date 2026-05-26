@@ -1,3 +1,9 @@
+"""Description
+Defined the logger
+
+Date: 2026-4-21
+Created by oldmerman
+"""
 import logging
 import os
 import random
@@ -5,12 +11,6 @@ import sys
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
 
-"""Description
-Defined the logger
-
-Date: 2026-4-21
-Created by oldmerman
-"""
 
 def setup_root_logger(env: str, log_dir: str = None):
     formatter = logging.Formatter(
