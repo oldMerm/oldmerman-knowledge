@@ -15,6 +15,7 @@ from psycopg2.extras import execute_values
 from psycopg2 import sql
 
 from agents.embedding import get_embeddings_supported, EmbeddingsGetterParam
+from common import BusinessException
 from db import get_vector_database
 from db.connection import get_db_connection
 from db.dao import ModelsRepository
@@ -29,8 +30,6 @@ def _compute_hash(text):
     """计算文档内容的SHA256哈希"""
     return hashlib.sha256(text.encode('utf-8')).hexdigest()
 
-# TODO: 修改文档条数逻辑没有添加
-# TODO: 创建集合需要判空
 
 class VectorCollectionRepository:
     def __init__(self):
@@ -43,7 +42,7 @@ class VectorCollectionRepository:
     def as_dependency(cls):
         return cls()
 
-    def _add_batch_new(self, collection_name, ids, texts, metadatas, content_hashes, doc_id):
+    async def _add_batch_new(self, collection_name, ids, texts, metadatas, content_hashes, doc_id):
         """
         批量插入新文档到数据库
         """
@@ -128,7 +127,7 @@ class VectorCollectionRepository:
 
         # 4. 批量插入新文档
         if new_ids:
-            self._add_batch_new(collection_name, new_ids, new_texts, new_metadatas, new_hashes, doc_id)
+            await self._add_batch_new(collection_name, new_ids, new_texts, new_metadatas, new_hashes, doc_id)
 
         # 返回成功上传的ID
         return new_ids
@@ -217,7 +216,7 @@ class VectorCollectionRepository:
                           dimensions: int = 0) -> int:
         if check_value_exists(self.table, "collection_name", collection_name) is True:
             logger.warning(f"collection_name: {collection_name} is exist")
-            raise ValueError(f"collection_name: {collection_name} is exist")
+            raise BusinessException(f"collection_name: {collection_name} is exist")
 
         with get_db_connection() as conn:
             cur = conn.cursor()
@@ -247,14 +246,14 @@ class VectorCollectionRepository:
                 name=collection_name,
                 metadata=v_metadata,
             )
-        except ValueError:
+        except Exception:
             self.remove_collection(collection_id)
-            raise ValueError(
+            raise BusinessException(
                 f"collection added fail, because collection_name:{collection_name} is exist in vector database")
 
         return collection_id
 
-    def insert_document(self, user_id, filename, file_size):
+    def insert_document(self, user_id, filename, file_size, collection_name):
         with get_db_connection() as conn:
             cur = conn.cursor()
             query = sql.SQL("""INSERT INTO {} (user_id, filename, filesize)
@@ -262,17 +261,18 @@ class VectorCollectionRepository:
                 sql.Identifier(self.document_table)
             )
             cur.execute(query, (user_id, filename, file_size))
-            return cur.fetchone()[0]
+            doc_id = cur.fetchone()[0]
+            self.update_collection(collection_name, number_update=True)
+            return doc_id
 
-    # =========== 以下函数暂不使用 ============
     def update_collection(self,
-                          collection_id: int,
+                          collection_name: str,
                           collection_alias: str = None,
                           collection_description: str = None,
-                          items_number: int = None) -> bool:
-        if check_value_exists(self.table, "id", collection_id) is False:
-            logger.error(f"Collection with id {collection_id} does not exist")
-            raise ValueError(f"Collection with id {collection_id} does not exist")
+                          number_update: bool = False) -> bool:
+        if check_value_exists(self.table, "collection_name", collection_name) is False:
+            logger.error(f"Collection with {collection_name} does not exist")
+            raise BusinessException(f"Collection with {collection_name} does not exist")
 
         with get_db_connection() as conn:
             cur = conn.cursor()
@@ -287,28 +287,28 @@ class VectorCollectionRepository:
                 updates.append("collection_description = %s")
                 values.append(collection_description)
 
-            if items_number is not None:
-                updates.append("items_number = %s")
-                values.append(items_number)
+            if number_update:
+                updates.append("items_number = items_number + 1")
 
             if not updates:
-                logger.warning(f"No fields to update for collection {collection_id}")
+                logger.warning(f"No fields to update for collection {collection_name}")
                 return False
 
-            values.append(collection_id)
-            query = sql.SQL("UPDATE {} SET {} WHERE id = %s").format(
+            values.append(collection_name)
+            query = sql.SQL("UPDATE {} SET {} WHERE collection_name = %s").format(
                 sql.Identifier(self.table),
-                sql.SQL(", ").join(sql.Identifier(field) for field in updates)
+                sql.SQL(", ").join(sql.SQL(field) for field in updates)
             )
             cur.execute(query, values)
 
-            logger.info(f"Collection:{collection_id} successfully updated")
+            logger.info(f"Collection:{collection_name} successfully updated")
             return True
 
+    # =========== 以下函数暂不使用 ============
     def remove_collection(self, collection_id: int) -> str:
         if check_value_exists(self.table, "id", collection_id) is False:
             logger.error(f"Collection with id {collection_id} does not exist")
-            raise ValueError(f"Collection with id {collection_id} does not exist")
+            raise BusinessException(f"Collection with id {collection_id} does not exist")
 
         with get_db_connection() as conn:
             cur = conn.cursor()
@@ -336,5 +336,5 @@ class VectorCollectionRepository:
 
 if __name__ == '__main__':
     vr = VectorCollectionRepository()
-    res = vr.insert_document(str(uuid4()), "0基础入门agent系统.md", 3 * 1024 * 1024)
+    res = vr.update_collection(collection_name="text_collection", number_update=True)
     print(res)

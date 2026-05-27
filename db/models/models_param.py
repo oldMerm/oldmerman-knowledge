@@ -25,6 +25,7 @@ class ModelCreateParam(BaseModel):
     api_key: Optional[str] = None
     base_url: Optional[str] = None
     type_id: Optional[int] = None
+    is_default: Optional[bool] = True
 
 class ModelsWithTypeParam(BaseModel):
     type_id: Optional[int] = None

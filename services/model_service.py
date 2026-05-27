@@ -42,7 +42,8 @@ class ModelService:
             logger.error("Create param is None")
             raise ValueError("Create param is None")
 
-        model_id = self.__mapper.insert_model(model_name, group_uuid, user_uuid, dto.api_key, dto.base_url, dto.type_id)
+        model_id = self.__mapper.insert_model(model_name, group_uuid, user_uuid,
+                                              dto.api_key, dto.base_url, dto.type_id, dto.is_default)
 
         if model_id is None:
             logger.error("Model added failed")

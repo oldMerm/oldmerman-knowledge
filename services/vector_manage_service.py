@@ -68,7 +68,7 @@ class VectorManageService:
         if file_size > settings.MAX_FILE_SIZE:
             raise BusinessException("The uploaded file exceeds 10MB")
         # 记录文件并返回访问id
-        doc_id = self.__mapper.insert_document(user_id, filename, file_size)
+        doc_id = self.__mapper.insert_document(user_id, filename, file_size, collection_name)
 
         # 开始向量化流程
         # 获取对应语言切分策略符号的优先级

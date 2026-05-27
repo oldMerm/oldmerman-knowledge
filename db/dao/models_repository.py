@@ -17,10 +17,6 @@ Created by oldmerman
 
 logger = get_logger(__name__)
 
-
-# TODO: 注册时使用默认值则有问题
-
-
 class ModelsRepository:
     def __init__(self):
         self.table = 'models'
@@ -83,6 +79,7 @@ class ModelsRepository:
                      api_key: str = None,
                      base_url: str = None,
                      type_id: int = None,
+                     is_default: bool = True
                      ) -> int:
         if check_value_exists("models_group", "group_uuid", group_uuid) is False:
             logger.error(f"Group with uuid {group_uuid} does not exist")
@@ -94,10 +91,10 @@ class ModelsRepository:
         with get_db_connection() as conn:
             cur = conn.cursor()
 
-            if api_key is not None:
-                crypt_api_key = AESEncryptUtil.encrypt(api_key)
+            if api_key is not None and is_default:
+                crypt_api_key = api_key
             else:
-                crypt_api_key = None
+                crypt_api_key = AESEncryptUtil.encrypt(api_key)
 
             query = sql.SQL("INSERT INTO {} (model_name, group_uuid, user_uuid, api_key, base_url) "
                             "VALUES (%s, %s, %s, %s, %s) "
