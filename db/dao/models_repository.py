@@ -54,11 +54,13 @@ class ModelsRepository:
                             "m.model_name as model_name,"
                             "mt.id as type_id,"
                             "mt.model_type_name as type_name "
-                            "FROM models m "
+                            "FROM {} m "
                             "LEFT JOIN model_type_link mtl ON m.id = mtl.model_id "
                             "LEFT JOIN model_type mt ON mtl.type_id = mt.id "
                             "WHERE m.group_uuid = %s "
-                            "ORDER BY m.id;")
+                            "ORDER BY m.id;").format(
+                sql.Identifier(self.table)
+            )
             cur.execute(query, (group_uuid,))
             rows = cur.fetchall()
 
@@ -75,7 +77,7 @@ class ModelsRepository:
     def insert_model(self,
                      model_name: str,
                      group_uuid: str,
-                     user_uuid: str,
+                     user_id: str,
                      api_key: str = None,
                      base_url: str = None,
                      type_id: int = None,
@@ -96,12 +98,12 @@ class ModelsRepository:
             else:
                 crypt_api_key = AESEncryptUtil.encrypt(api_key)
 
-            query = sql.SQL("INSERT INTO {} (model_name, group_uuid, user_uuid, api_key, base_url) "
+            query = sql.SQL("INSERT INTO {} (model_name, group_uuid, user_id, api_key, base_url) "
                             "VALUES (%s, %s, %s, %s, %s) "
                             "RETURNING id").format(
                 sql.Identifier(self.table)
             )
-            cur.execute(query, (model_name, group_uuid, user_uuid, crypt_api_key, base_url))
+            cur.execute(query, (model_name, group_uuid, user_id, crypt_api_key, base_url))
             row = cur.fetchone()
 
             model_id = row[0]

@@ -12,7 +12,7 @@ from fastapi.params import Depends, Body
 
 from common import Result
 from db.entities import VectorCollection
-from db.models import VectorCollectionUpdateParam
+from db.models import VectorCollectionUpdateParam, VectorCollectionRenderParam
 from services.vector_manage_service import VectorManageService, get_vector_manage_service
 from utils import UserContext
 
@@ -29,7 +29,7 @@ async def upload(req: Request,
                  file: Optional[UploadFile] = Form(description="向量化使用的文档，最大10MB"),
                  metadatas: Optional[dict[str, Any]] = Form(default={}, description="切分的文档元数据"),
                  language: str = Form(default='en', description="文档使用的主语言"),
-                 service: VectorManageService = Depends(get_vector_manage_service)) -> Result[dict[str, List[str]]]:
+                 service: VectorManageService = Depends(get_vector_manage_service)) -> Result[List[str]]:
     user_id = UserContext.get_user_id(req)
     return Result.success(
         data=await service.upload(user_id, collection_name, metadatas, file, language)
@@ -38,7 +38,7 @@ async def upload(req: Request,
 
 @router.get("/render")
 def get_render_collection(service: VectorManageService = Depends(get_vector_manage_service)
-                          ) -> Result[List[VectorCollection]]:
+                          ) -> Result[List[VectorCollectionRenderParam]]:
     return Result.success(
         data=service.get_render_list()
     )

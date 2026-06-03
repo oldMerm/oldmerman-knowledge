@@ -7,8 +7,7 @@ Created by oldmerman
 
 import hashlib
 import json
-from typing import List, Optional
-from uuid import uuid4
+from typing import List, Optional, Any
 
 from psycopg2.extras import execute_values
 
@@ -21,6 +20,7 @@ from db.connection import get_db_connection
 from db.dao import ModelsRepository
 from db.dao.common_repository import check_value_exists
 from db.entities.vector_collection import VectorCollection
+from db.models import VectorCollectionRenderParam, VectorCollectionCreateParam
 from utils import get_logger
 
 logger = get_logger(__name__)
@@ -36,21 +36,21 @@ class VectorCollectionRepository:
         self.table = 'vector_collection'
         self.metadata_table = 'vector_metadata'
         self.document_table = 'documents'
+        self.usage_table = 'tokens_usage'
         self.vector_client = get_vector_database()
 
     @classmethod
     def as_dependency(cls):
         return cls()
 
-    async def _add_batch_new(self, collection_name, ids, texts, metadatas, content_hashes, doc_id):
+    async def _add_batch_new(self, collection_name, ids, texts, metadatas, content_hashes, doc_id
+                             ) -> Optional[VectorCollectionCreateParam]:
         """
         批量插入新文档到数据库
         """
         if not ids:
-            return
-
+            return None
         collection = self.vector_client.get_collection(collection_name)
-
         embedding_id = collection.metadata.get("embedding_id")
         model_param = ModelsRepository().select_model(embedding_id)
         param = EmbeddingsGetterParam(
@@ -60,11 +60,11 @@ class VectorCollectionRepository:
             dimensions=collection.metadata.get("dimensions") or 1024,
             doc=texts
         )
-        embeddings = get_embeddings_supported(param)
-
+        embeddings_with_metadata = get_embeddings_supported(param)  # 获取到统一响应的数据
+        # 记录嵌入向量的相关数据
         collection.add(
             ids=ids,
-            embeddings=embeddings,
+            embeddings=embeddings_with_metadata.data,
             documents=texts,
             metadatas=metadatas,
         )
@@ -87,10 +87,15 @@ class VectorCollectionRepository:
                 VALUES %s
             """, insert_data)
             conn.commit()
+        return VectorCollectionCreateParam(
+            model_id=embedding_id,
+            tokens=embeddings_with_metadata.tokens
+        )
 
-    async def embeddings(self, collection_name, ids, texts, metadatas, doc_id) -> List[str]:
+    async def embeddings(self, collection_name, ids, texts, metadatas, doc_id) -> Optional[VectorCollectionCreateParam]:
+        vo = None
         if not ids:
-            return []
+            return None
         # 1. 批量计算所有文档的 hash
         content_hashes = []
         for text in texts:
@@ -127,10 +132,12 @@ class VectorCollectionRepository:
 
         # 4. 批量插入新文档
         if new_ids:
-            await self._add_batch_new(collection_name, new_ids, new_texts, new_metadatas, new_hashes, doc_id)
+            vo = await self._add_batch_new(collection_name, new_ids, new_texts, new_metadatas,
+                                                           new_hashes, doc_id)
 
         # 返回成功上传的ID
-        return new_ids
+        vo.ids = new_ids
+        return vo
 
     def select_by_id(self, collection_id: int) -> Optional[VectorCollection]:
         with get_db_connection() as conn:
@@ -182,27 +189,40 @@ class VectorCollectionRepository:
                 for row in rows
             ]
 
-    def select_name_list(self) -> List[VectorCollection]:
+    def select_name_list(self) -> List[VectorCollectionRenderParam]:
         with get_db_connection() as conn:
             cur = conn.cursor()
-            query = sql.SQL("SELECT id, embedding_id, collection_name, collection_alias, "
-                            "collection_description, items_number, created_at ,dimensions "
-                            "FROM {} ORDER BY id").format(
+            query = sql.SQL("""
+                            SELECT vc.id,
+                                   vc.embedding_id,
+                                   m.model_name,
+                                   vc.collection_name,
+                                   vc.collection_alias,
+                                   vc.collection_description,
+                                   vc.items_number,
+                                   vc.created_at,
+                                   vc.dimensions
+                            FROM {} vc
+                                     LEFT JOIN models m
+                            ON vc.embedding_id = m.id
+                            ORDER BY vc.id;
+                            """).format(
                 sql.Identifier(self.table)
             )
             cur.execute(query)
             rows = cur.fetchall()
 
             return [
-                VectorCollection(
+                VectorCollectionRenderParam(
                     id=row[0],
                     embedding_id=row[1],
-                    collection_name=row[2],
-                    collection_alias=row[3],
-                    collection_description=row[4],
-                    items_number=row[5],
-                    created_at=row[6],
-                    dimensions=row[7]
+                    embedding_name=row[2],
+                    collection_name=row[3],
+                    collection_alias=row[4],
+                    collection_description=row[5],
+                    items_number=row[6],
+                    created_at=row[7],
+                    dimensions=row[8]
                 )
                 for row in rows
             ]
@@ -304,7 +324,6 @@ class VectorCollectionRepository:
             logger.info(f"Collection:{collection_name} successfully updated")
             return True
 
-    # =========== 以下函数暂不使用 ============
     def remove_collection(self, collection_id: int) -> str:
         if check_value_exists(self.table, "id", collection_id) is False:
             logger.error(f"Collection with id {collection_id} does not exist")

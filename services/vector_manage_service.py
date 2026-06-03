@@ -16,10 +16,11 @@ from common import BusinessException
 from config import get_settings
 from db import get_vector_database
 from db.dao import VectorCollectionRepository
-from db.entities import VectorCollection
-from db.models.vector_manage_param import VectorCollectionUpdateParam
+from db.dao.tokens_usage_repository import TokensUsageRepository
+from db.models import VectorCollectionRenderParam
+from db.models.vector_manage_param import VectorCollectionUpdateParam, VectorCollectionCreateParam
 from utils import language_separators
-from utils.file_processor import extract_text, split_to_chunks
+from utils.file_processor import extract_text
 from utils.logger import get_logger
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
@@ -32,32 +33,20 @@ class VectorManageService:
 
     def __init__(self,
                  vector_dao: VectorCollectionRepository,
+                 tokens_usage_dao: TokensUsageRepository,
                  vector_client: ClientAPI):
         self.__mapper = vector_dao
+        self.__tokens_usage_mapper = tokens_usage_dao
         self.__vector_client = vector_client
 
-    # 对每个chunk(小于50KB)进行向量化
-    async def __embeddings(self, splitter, metadatas, file_content, collection_name, doc_id) -> List[str]:
-        original_doc = Document(
-            page_content=file_content,
-            metadata=metadatas
-        )
-        doc_chunks = splitter.split_documents([original_doc])  # 切分
-
-        batch_ids = [str(uuid4()) for i in range(len(doc_chunks))]  # 向量化的文档id
-        batch_texts = [chunk.page_content for chunk in doc_chunks]  # 文档分块数据
-        batch_metadatas = [chunk.metadata for chunk in doc_chunks]  # 分块的元数据
-
-        return await self.__mapper.embeddings(
-            collection_name=collection_name,
-            ids=batch_ids,
-            texts=batch_texts,
-            metadatas=batch_metadatas,
-            doc_id=doc_id
-        )
-
     async def upload(self, user_id: str, collection_name: str, metadatas: dict[str, Any],
-                     file: UploadFile, language: str) -> dict[str, List[str]]:
+                     file: UploadFile, language: str) -> list[str]:
+        """
+            向量化流程梳理：
+            1. 判断文件是否大于最大的阈值MAX_FILE_SIZE
+            2. 封装元数据，准备切分
+            3. 切分文章并落库，postgresSQL，chromadb
+        """
         if user_id is None:
             raise BusinessException("Invalid param because userId is None")
 
@@ -76,32 +65,41 @@ class VectorManageService:
         if separators is None:
             raise BusinessException(f"Not supported language {language}")
 
+        # 元数据封装
+        metadatas["author"] = user_id
+        metadatas["filename"] = filename
+
+        text = extract_text(original_content, filename) # 提纯文本
+        original_doc = Document(
+            page_content=text,
+            metadata=metadatas
+        )
+
         # 文档切分器(根据标点符号优先级)
         splitter = RecursiveCharacterTextSplitter(
             chunk_size=500,
             chunk_overlap=50,
             separators=separators
         )
-        # 元数据封装
-        metadatas["author"] = user_id
-        metadatas["filename"] = filename
+        doc_chunks = splitter.split_documents([original_doc])  # 切分
 
-        ids: dict[str, List[str]] = {}
-        docs_count_group = 1
-        if file_size < settings.MAX_CHUNK_SIZE:
-            # 若占用小于最大的chunk_size, 直接向量化
-            text = extract_text(original_content, filename)
-            ids["doc" + str(docs_count_group)] = await self.__embeddings(splitter, metadatas, text, collection_name, doc_id)
-        else:
-            # 否则切块进行向量化
-            chunks = split_to_chunks(original_content, filename)
-            for chunk in chunks:
-                metadatas["file_chunk_name"] = chunk["name"]
-                ids["doc" + str(docs_count_group)] = await self.__embeddings(splitter, metadatas, chunk["text"], collection_name, doc_id)
-                docs_count_group += 1
-        return ids
+        batch_ids = [str(uuid4()) for i in range(len(doc_chunks))]  # 向量化的文档id
+        batch_texts = [chunk.page_content for chunk in doc_chunks]  # 文档分块数据
+        batch_metadatas = [chunk.metadata for chunk in doc_chunks]  # 分块的元数据
 
-    def get_render_list(self) -> List[VectorCollection]:
+        response = await self.__mapper.embeddings(
+            collection_name=collection_name,
+            ids=batch_ids,
+            texts=batch_texts,
+            metadatas=batch_metadatas,
+            doc_id=doc_id
+        )
+
+        # 记录token消耗量
+        self.__tokens_usage_mapper.add(user_id, response.model_id, response.tokens)
+        return response.ids
+
+    def get_render_list(self) -> List[VectorCollectionRenderParam]:
         return self.__mapper.select_name_list()
 
     def insert_collection(self, dto: VectorCollectionUpdateParam) -> int:
@@ -131,9 +129,10 @@ class VectorManageService:
 
 def get_vector_manage_service(
         vector_dao: VectorCollectionRepository = Depends(),
+        tokens_usage_dao: TokensUsageRepository = Depends(),
         vector_client: ClientAPI = Depends(get_vector_database)
 ) -> VectorManageService:
-    return VectorManageService(vector_dao, vector_client)
+    return VectorManageService(vector_dao, tokens_usage_dao,vector_client)
 
 
 if __name__ == "__main__":

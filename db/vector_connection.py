@@ -4,13 +4,13 @@ the vector client about the project
 Date: 2026-5-19
 Created by oldmerman
 """
-
+import os
 from functools import lru_cache
 
 import chromadb
 from chromadb import ClientAPI
 
-from agents.embedding.zhi_pu_embedding import get_zhi_pu_embedding
+from agents.embedding import EmbeddingsGetterParam, get_embeddings_supported
 from config import get_settings
 from utils import get_logger
 
@@ -25,13 +25,19 @@ def get_vector_database() -> ClientAPI:
 
 if __name__ == "__main__":
     client = get_vector_database()
+
+    e_input = ["广东省东莞市西南部"]
+
+    param = EmbeddingsGetterParam(
+        api_key=os.getenv("ZHI_PU_API_KEY"),
+        base_url="https://open.bigmodel.cn/api/paas/v4",
+        model_name="embedding-3",
+        doc=e_input,
+        dimensions=1024
+    )
+
     # query demo
     print(client.get_collection("text_collection").query(
-        query_embeddings=[item.embedding for item in
-                          get_zhi_pu_embedding("your-api-key").create(
-                              input="老鱼人博客oss使用的消费量",
-                              model="embedding-3",
-                              dimensions=1024
-                          ).data],
-        n_results=1
+        query_embeddings=get_embeddings_supported(param).data,
+        n_results=2
     ))

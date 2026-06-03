@@ -1,4 +1,6 @@
-from .embedding_provider import get_embeddings_supported, EmbeddingsGetterParam, zhi_pu_embedding
+from .embedding_provider import get_embeddings_supported
+from .zhi_pu_embedding import ZhiPuEmbedding
+from .common import EMB_SUPPORT_ENUM, embedding_support, EmbeddingsGetterParam, EmbeddingsResponseParam
 
 # 如何选择切分器？
 # 任务场景 | 首选切分器 | 理由
@@ -10,6 +12,7 @@ from .embedding_provider import get_embeddings_supported, EmbeddingsGetterParam,
 
 
 __all__ = [
-    "get_embeddings_supported", "EmbeddingsGetterParam", "zhi_pu_embedding"
+    "get_embeddings_supported",
+    "ZhiPuEmbedding",
+    "EmbeddingsGetterParam", "embedding_support", "EMB_SUPPORT_ENUM", "EmbeddingsResponseParam"
 ]
-
