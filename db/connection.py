@@ -18,9 +18,10 @@ DATABASE_URL = os.getenv("DATABASE_URL", "")
 
 settings = get_settings()
 
+
 def init_db():
     global _connection_pool
-    
+
     logger.info("Initializing database connection pool...")
     _connection_pool = psycopg2.pool.SimpleConnectionPool(
         minconn=1,
@@ -36,10 +37,12 @@ def get_connection():
         init_db()
     return _connection_pool.getconn()
 
+
 def close_connection(conn):
     global _connection_pool
     if _connection_pool and conn:
         _connection_pool.putconn(conn)
+
 
 @contextmanager
 def get_db_connection():
@@ -51,6 +54,6 @@ def get_db_connection():
         conn.commit()
     except Exception as e:
         conn.rollback()
-        raise e# 重新抛出原始异常，让调用方处理
+        raise e  # 重新抛出原始异常，让调用方处理
     finally:
         close_connection(conn)

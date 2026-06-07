@@ -30,39 +30,39 @@ class AuthService:
     def _get_user_by_username(self, username: str) -> Optional[User]:
         conn = get_connection()
         try:
-            cur = conn.cursor()
-            cur.execute(
-                "SELECT id, user_uuid, username, email, phone, password_hash, status, "
-                "created_at, updated_at, last_login_at FROM users WHERE username = %s",
-                (username,)
-            )
-            row = cur.fetchone()
-            if not row:
-                return None
-            return User(
-                id=row[0],
-                user_uuid=row[1],
-                username=row[2],
-                email=row[3],
-                phone=row[4],
-                password_hash=row[5],
-                status=UserStatus(row[6]),
-                created_at=row[7],
-                updated_at=row[8],
-                last_login_at=row[9],
-            )
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT id, user_uuid, username, email, phone, password_hash, status, "
+                    "created_at, updated_at, last_login_at FROM users WHERE username = %s",
+                    (username,)
+                )
+                row = cur.fetchone()
+                if not row:
+                    return None
+                return User(
+                    id=row[0],
+                    user_uuid=row[1],
+                    username=row[2],
+                    email=row[3],
+                    phone=row[4],
+                    password_hash=row[5],
+                    status=UserStatus(row[6]),
+                    created_at=row[7],
+                    updated_at=row[8],
+                    last_login_at=row[9],
+                )
         finally:
             close_connection(conn)
 
     def _update_last_login(self, user_id: int, ip_address: Optional[str]) -> None:
         conn = get_connection()
         try:
-            cur = conn.cursor()
-            cur.execute(
-                "UPDATE users SET last_login_at = %s, last_login_ip = %s WHERE id = %s",
-                (datetime.now(timezone.utc), ip_address, user_id)
-            )
-            conn.commit()
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE users SET last_login_at = %s, last_login_ip = %s WHERE id = %s",
+                    (datetime.now(timezone.utc), ip_address, user_id)
+                )
+                conn.commit()
         finally:
             close_connection(conn)
 
@@ -76,41 +76,41 @@ class AuthService:
     ) -> User:
         conn = get_connection()
         try:
-            cur = conn.cursor()
-            cur.execute(
-                "SELECT id FROM users WHERE username = %s OR (email = %s AND %s IS NOT NULL) "
-                "OR (phone = %s AND %s IS NOT NULL)",
-                (username, email, email, phone, phone)
-            )
-            if cur.fetchone():
-                raise ValueError("Username, email or phone already exists")
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT id FROM users WHERE username = %s OR (email = %s AND %s IS NOT NULL) "
+                    "OR (phone = %s AND %s IS NOT NULL)",
+                    (username, email, email, phone, phone)
+                )
+                if cur.fetchone():
+                    raise ValueError("Username, email or phone already exists")
 
-            password_hash = self._hash_password(password)
-            user_uuid = str(uuid.uuid4())
+                password_hash = self._hash_password(password)
+                user_uuid = str(uuid.uuid4())
 
-            cur.execute(
-                "INSERT INTO users (user_uuid, username, email, phone, password_hash, ip_address, status) "
-                "VALUES (%s, %s, %s, %s, %s, %s, %s) "
-                "RETURNING id, created_at, updated_at",
-                (user_uuid, username, email, phone, password_hash, ip_address, UserStatus.ACTIVE)
-            )
-            row = cur.fetchone()
-            conn.commit()
+                cur.execute(
+                    "INSERT INTO users (user_uuid, username, email, phone, password_hash, ip_address, status) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s) "
+                    "RETURNING id, created_at, updated_at",
+                    (user_uuid, username, email, phone, password_hash, ip_address, UserStatus.ACTIVE)
+                )
+                row = cur.fetchone()
+                conn.commit()
 
-            user = User(
-                id=row[0],
-                user_uuid=user_uuid,
-                username=username,
-                email=email,
-                phone=phone,
-                password_hash=password_hash,
-                ip_address=ip_address,
-                status=UserStatus.ACTIVE,
-                created_at=row[1],
-                updated_at=row[2],
-            )
-            logger.info(f"User registered: {username}")
-            return user
+                user = User(
+                    id=row[0],
+                    user_uuid=user_uuid,
+                    username=username,
+                    email=email,
+                    phone=phone,
+                    password_hash=password_hash,
+                    ip_address=ip_address,
+                    status=UserStatus.ACTIVE,
+                    created_at=row[1],
+                    updated_at=row[2],
+                )
+                logger.info(f"User registered: {username}")
+                return user
         except Exception as e:
             conn.rollback()
             logger.error(f"Registration failed: {e}")

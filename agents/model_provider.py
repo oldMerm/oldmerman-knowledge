@@ -7,6 +7,7 @@ Created by oldmerman
 
 from langchain_core.language_models import BaseChatModel
 from langchain_openai import ChatOpenAI
+from pydantic import BaseModel
 
 from db.dao.models_repository import ModelsRepository
 from utils import get_logger
@@ -14,25 +15,41 @@ from utils import get_logger
 logger = get_logger(__name__)
 
 
+class ModelCommonParam(BaseModel):
+    model_id: int
+    model_name: str
+    model: ChatOpenAI
+
+
 class ModelProvider:
 
     @staticmethod
-    def get_model(model_id: int,
+    def get_model(model_id: int = None,
+                  model_name: str = None,
                   max_token: int = 1024,
-                  temperature: float = 1.2) -> BaseChatModel:
+                  temperature: float = 1.2) -> ModelCommonParam:
         if temperature > 2 or temperature < 0:
             logger.warning(f"Invalid model temperature: {temperature}")
             raise ValueError(f"Invalid model temperature: {temperature}")
 
         dao = ModelsRepository.as_dependency()
-        param = dao.select_model(model_id=model_id)
+        if model_id:
+            param = dao.select_model(model_id=model_id)
+        elif model_name:
+            param = dao.select_model_by_name(model_name=model_name)
+        else:
+            raise ValueError("error param for agent")
 
-        return ChatOpenAI(
-            model=param.model_name,
-            base_url=param.base_url,
-            api_key=param.api_key,
-            temperature=temperature,
-            max_tokens=max_token
+        return ModelCommonParam(
+            model_id=param.id,
+            model_name=param.model_name,
+            model=ChatOpenAI(
+                model=param.model_name,
+                base_url=param.base_url,
+                api_key=param.api_key,
+                temperature=temperature,
+                max_tokens=max_token
+            )
         )
 
 

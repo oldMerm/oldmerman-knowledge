@@ -1,0 +1,123 @@
+import asyncio
+import json
+
+from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
+
+from dotenv import load_dotenv
+from langchain.agents import create_agent
+from pydantic import BaseModel
+
+from agents.model_provider import ModelProvider
+from agents.tool import save_token_usage_to_db
+from agents.tool.article_summary import PROMPT, ArticleSummaryContext, refresh_cache
+from common import Result
+from db.connection import get_db_connection
+from utils.logger import get_logger
+
+"""Description
+Controller about auth
+
+Date: 2026-4-23
+Created by oldmerman
+"""
+
+load_dotenv()
+
+logger = get_logger(__name__)
+
+router = APIRouter(prefix="/v1", tags=["agent"])
+
+class ArticleGenBody(BaseModel):
+    article_id: str
+    article_name: str
+    content: str
+
+# 用于文章摘要生成
+model_param = ModelProvider.get_model(model_name='deepseek-v4-flash', max_token=256)
+agent = create_agent(
+    model=model_param.model,
+    system_prompt=PROMPT,
+    context_schema=ArticleSummaryContext,
+    middleware=[
+        refresh_cache,
+        save_token_usage_to_db
+    ]
+)
+
+@router.post("")
+async def chat(dto: ArticleGenBody):
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            query = """
+                    SELECT article_summary FROM cache.summary_cache
+                    WHERE article_id = %s AND created_at >= NOW() - INTERVAL '7 DAY'
+                    """
+            cur.execute(
+                query,
+                (dto.article_id,)
+            )
+            row = cur.fetchone()
+            if row:
+                return Result.success(data=row[0])
+
+    async def generate_response():
+        for chunk in agent.stream(
+                {"messages": [{"role": "user", "content": dto.content}]},
+                context=ArticleSummaryContext(article_id=dto.article_id, article_name=dto.article_name, model_id=model_param.model_id),
+                version="v2",
+                stream_mode="messages"
+        ):
+            if chunk["type"] == "messages":
+                token, metadata = chunk["data"]
+                node_type = metadata.get('langgraph_node')
+                if node_type == 'model':
+                    token_text = getattr(token, 'content', '') or getattr(token, 'text', '')
+                    if token_text:
+                        yield f"data: {json.dumps({'chunk': token_text, 'type': 'content'})}\n\n"
+                        await asyncio.sleep(0.1)
+                elif node_type == 'tool':
+                    pass # 工具节点可单独处理
+        yield f"data: {json.dumps({'chunk': 'Finished', 'type': 'end'})}\n\n"
+
+    return StreamingResponse(
+        generate_response(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache"}
+    )
+
+
+if __name__ == "__main__":
+    # 打开文件并读取内容
+    with open(r'C:\Users\asus\Desktop\博客部署\文章\须知.md', 'r', encoding='utf-8') as file:
+        content = file.read()
+
+    for chunk in agent.stream(
+            {"messages": [{"role": "user", "content": content}]},
+            context=ArticleSummaryContext(article_id="cc1beec11588417aac36f5472100f7c7", article_name="须知", model_id=model_param.model_id),
+            stream_mode="messages",
+            version="v2"
+    ):
+        if chunk["type"] == "messages":
+            token, metadata = chunk["data"]
+
+            if metadata.get('langgraph_node') == 'model':
+                text = getattr(token, 'content', '') or getattr(token, 'text', '')
+                if text:
+                    # 真实场景换成SSE向调用方响应一个个chunk即可
+                    print(text, end='', flush=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

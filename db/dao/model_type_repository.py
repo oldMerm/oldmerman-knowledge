@@ -34,99 +34,99 @@ class ModelTypeRepository:
             raise ValueError(f"ModelType:{model_type_name} already exists")
 
         with get_db_connection() as conn:
-            cur = conn.cursor()
-            query = sql.SQL("INSERT INTO {} (model_type_name) "
-                            "VALUES (%s) "
-                            "RETURNING id").format(
-                sql.Identifier(self.table)
-            )
-            cur.execute(query, (model_type_name,))
-            row = cur.fetchone()
-            logger.info(f"ModelType:{model_type_name} added with id {row[0]}")
-            return row[0]
+            with conn.cursor() as cur:
+                query = sql.SQL("INSERT INTO {} (model_type_name) "
+                                "VALUES (%s) "
+                                "RETURNING id").format(
+                    sql.Identifier(self.table)
+                )
+                cur.execute(query, (model_type_name,))
+                row = cur.fetchone()
+                logger.info(f"ModelType:{model_type_name} added with id {row[0]}")
+                return row[0]
 
     def select_by_id(self, type_id: int) -> Optional[ModelType]:
         with get_db_connection() as conn:
-            cur = conn.cursor()
-            query = sql.SQL("SELECT id, model_type_name, created_at FROM {} WHERE id = %s").format(
-                sql.Identifier(self.table)
-            )
-            cur.execute(query, (type_id,))
-            row = cur.fetchone()
+            with conn.cursor() as cur:
+                query = sql.SQL("SELECT id, model_type_name, created_at FROM {} WHERE id = %s").format(
+                    sql.Identifier(self.table)
+                )
+                cur.execute(query, (type_id,))
+                row = cur.fetchone()
 
-            if row is None:
-                logger.warning(f"ModelType with id {type_id} not found")
-                return None
+                if row is None:
+                    logger.warning(f"ModelType with id {type_id} not found")
+                    return None
 
-            return ModelType(
-                id=row[0],
-                model_type_name=row[1],
-                created_at=row[2]
-            )
-
-    def select_all(self) -> List[ModelType]:
-        with get_db_connection() as conn:
-            cur = conn.cursor()
-            query = sql.SQL("SELECT id, model_type_name, created_at FROM {} ORDER BY id").format(
-                sql.Identifier(self.table)
-            )
-            cur.execute(query)
-            rows = cur.fetchall()
-
-            return [
-                ModelType(
+                return ModelType(
                     id=row[0],
                     model_type_name=row[1],
                     created_at=row[2]
                 )
-                for row in rows
-            ]
 
-    def select_type_models(self, type_name: str):
+    def select_all(self) -> List[ModelType]:
         with get_db_connection() as conn:
-            cur = conn.cursor()
+            with conn.cursor() as cur:
+                query = sql.SQL("SELECT id, model_type_name, created_at FROM {} ORDER BY id").format(
+                    sql.Identifier(self.table)
+                )
+                cur.execute(query)
+                rows = cur.fetchall()
 
-            query = sql.SQL("SELECT id FROM model_type WHERE model_type_name = %s")
-            cur.execute(query, (type_name,))
-            row = cur.fetchone()
-
-            if row[0] is None:
-                return None
-            type_id = row[0]
-
-            query = sql.SQL("SELECT m.id, m.model_name FROM models m "
-                            "INNER JOIN {} mtl ON m.id = mtl.model_id "
-                            "WHERE mtl.type_id = %s ").format(
-                sql.Identifier(self.link_table)
-            )
-            cur.execute(query, (type_id,))
-            rows = cur.fetchall()
-
-            return ModelsWithTypeParam(
-                type_id=type_id,
-                type_name=type_name,
-                models=[
-                    ModelRenderParam1(
-                        model_id=row[0],
-                        model_name=row[1]
+                return [
+                    ModelType(
+                        id=row[0],
+                        model_type_name=row[1],
+                        created_at=row[2]
                     )
                     for row in rows
                 ]
-            )
+
+    def select_type_models(self, type_name: str):
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+
+                query = sql.SQL("SELECT id FROM model_type WHERE model_type_name = %s")
+                cur.execute(query, (type_name,))
+                row = cur.fetchone()
+
+                if row[0] is None:
+                    return None
+                type_id = row[0]
+
+                query = sql.SQL("SELECT m.id, m.model_name FROM models m "
+                                "INNER JOIN {} mtl ON m.id = mtl.model_id "
+                                "WHERE mtl.type_id = %s ").format(
+                    sql.Identifier(self.link_table)
+                )
+                cur.execute(query, (type_id,))
+                rows = cur.fetchall()
+
+                return ModelsWithTypeParam(
+                    type_id=type_id,
+                    type_name=type_name,
+                    models=[
+                        ModelRenderParam1(
+                            model_id=row[0],
+                            model_name=row[1]
+                        )
+                        for row in rows
+                    ]
+                )
 
 
     def delete_by_id(self, type_id: int) -> bool:
         with get_db_connection() as conn:
-            cur = conn.cursor()
-            query = sql.SQL("DELETE FROM {} WHERE id = %s").format(
-                sql.Identifier(self.table)
-            )
-            cur.execute(query, (type_id,))
-            if cur.rowcount > 0:
-                logger.info(f"ModelType with id {type_id} deleted")
-                return True
-            logger.warning(f"ModelType with id {type_id} not found for deletion")
-            return False
+            with conn.cursor() as cur:
+                query = sql.SQL("DELETE FROM {} WHERE id = %s").format(
+                    sql.Identifier(self.table)
+                )
+                cur.execute(query, (type_id,))
+                if cur.rowcount > 0:
+                    logger.info(f"ModelType with id {type_id} deleted")
+                    return True
+                logger.warning(f"ModelType with id {type_id} not found for deletion")
+                return False
 
 if __name__ == "__main__":
     dao = ModelTypeRepository()

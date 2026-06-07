@@ -14,6 +14,12 @@ embedding_support: dict[str, EMB_SUPPORT_ENUM] = {
     "https://open.bigmodel.cn/api/paas/v4": EMB_SUPPORT_ENUM.BIG_MODEL,
 }
 
+# 嵌入模型提供商参数
+class EmbeddingsProviderCommonParam(BaseModel):
+    model_name: str = Field(description="模型名称")
+    dimensions: List[int] = Field(description="模型支持的向量")
+    chunk_size: int = Field(description="模型支持的最大批处理")
+    max_context: int = Field(description="单条的最大token数")
 # 公共请求实体（向量）
 class EmbeddingsGetterParam(BaseModel):
     api_key: str = Field(description="模型的api_key")

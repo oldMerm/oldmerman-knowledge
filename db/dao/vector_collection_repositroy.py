@@ -69,24 +69,24 @@ class VectorCollectionRepository:
             metadatas=metadatas,
         )
         with get_db_connection() as conn:
-            cur = conn.cursor()
-            # 准备批量插入的数据
-            insert_data = []
-            for chunk_id, text, metadata, content_hash in zip(ids, texts, metadatas, content_hashes):
-                insert_data.append((
-                    chunk_id,
-                    collection_name,
-                    content_hash,
-                    json.dumps(metadata) if metadata else None,
-                    doc_id
-                ))
-            # 批量插入
-            execute_values(cur, f"""
-                INSERT INTO {self.metadata_table} 
-                (id, collection_name, content_hash, metadata, doc_id)
-                VALUES %s
-            """, insert_data)
-            conn.commit()
+            with conn.cursor() as cur:
+                # 准备批量插入的数据
+                insert_data = []
+                for chunk_id, text, metadata, content_hash in zip(ids, texts, metadatas, content_hashes):
+                    insert_data.append((
+                        chunk_id,
+                        collection_name,
+                        content_hash,
+                        json.dumps(metadata) if metadata else None,
+                        doc_id
+                    ))
+                # 批量插入
+                execute_values(cur, f"""
+                    INSERT INTO {self.metadata_table} 
+                    (id, collection_name, content_hash, metadata, doc_id)
+                    VALUES %s
+                """, insert_data)
+                conn.commit()
         return VectorCollectionCreateParam(
             model_id=embedding_id,
             tokens=embeddings_with_metadata.tokens
@@ -104,18 +104,18 @@ class VectorCollectionRepository:
 
         # 2. 批量查询已存在的 hash
         with get_db_connection() as conn:
-            cur = conn.cursor()
-            query = sql.SQL("""
-                            SELECT content_hash
-                            FROM {}
-                            WHERE content_hash = ANY (%s)
-                              AND collection_name = %s
-                            """).format(
-                sql.Identifier(self.metadata_table)
-            )
+            with conn.cursor() as cur:
+                query = sql.SQL("""
+                                SELECT content_hash
+                                FROM {}
+                                WHERE content_hash = ANY (%s)
+                                  AND collection_name = %s
+                                """).format(
+                    sql.Identifier(self.metadata_table)
+                )
 
-            cur.execute(query, (content_hashes, collection_name))
-            existing_hashes = {row[0] for row in cur.fetchall()}
+                cur.execute(query, (content_hashes, collection_name))
+                existing_hashes = {row[0] for row in cur.fetchall()}
 
         # 3. 过滤出需要新增的文档
         new_ids = []
@@ -141,91 +141,91 @@ class VectorCollectionRepository:
 
     def select_by_id(self, collection_id: int) -> Optional[VectorCollection]:
         with get_db_connection() as conn:
-            cur = conn.cursor()
-            query = sql.SQL("SELECT id, embedding_id, collection_name, collection_alias, "
-                            "collection_description, items_number, created_at "
-                            "FROM {} WHERE id = %s").format(
-                sql.Identifier(self.table)
-            )
-            cur.execute(query, (collection_id,))
-            row = cur.fetchone()
+            with conn.cursor() as cur:
+                query = sql.SQL("SELECT id, embedding_id, collection_name, collection_alias, "
+                                "collection_description, items_number, created_at "
+                                "FROM {} WHERE id = %s").format(
+                    sql.Identifier(self.table)
+                )
+                cur.execute(query, (collection_id,))
+                row = cur.fetchone()
 
-            if row is None:
-                logger.warning(f"collection with id {collection_id} not found")
-                return None
+                if row is None:
+                    logger.warning(f"collection with id {collection_id} not found")
+                    return None
 
-            return VectorCollection(
-                id=row[0],
-                embedding_id=row[1],
-                collection_name=row[2],
-                collection_alias=row[3],
-                collection_description=row[4],
-                items_number=row[5],
-                created_at=row[6]
-            )
-
-    def select_by_embedding(self, embedding_id: int) -> List[VectorCollection]:
-        with get_db_connection() as conn:
-            cur = conn.cursor()
-            query = sql.SQL("SELECT id, embedding_id, collection_name, collection_alias, "
-                            "collection_description, items_number, created_at , dimensions "
-                            "FROM {} WHERE embedding_id = %s ORDER BY id").format(
-                sql.Identifier(self.table)
-            )
-            cur.execute(query, (embedding_id,))
-            rows = cur.fetchall()
-
-            return [
-                VectorCollection(
+                return VectorCollection(
                     id=row[0],
                     embedding_id=row[1],
                     collection_name=row[2],
                     collection_alias=row[3],
                     collection_description=row[4],
                     items_number=row[5],
-                    created_at=row[6],
-                    dimensions=row[7]
+                    created_at=row[6]
                 )
-                for row in rows
-            ]
+
+    def select_by_embedding(self, embedding_id: int) -> List[VectorCollection]:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                query = sql.SQL("SELECT id, embedding_id, collection_name, collection_alias, "
+                                "collection_description, items_number, created_at , dimensions "
+                                "FROM {} WHERE embedding_id = %s ORDER BY id").format(
+                    sql.Identifier(self.table)
+                )
+                cur.execute(query, (embedding_id,))
+                rows = cur.fetchall()
+
+                return [
+                    VectorCollection(
+                        id=row[0],
+                        embedding_id=row[1],
+                        collection_name=row[2],
+                        collection_alias=row[3],
+                        collection_description=row[4],
+                        items_number=row[5],
+                        created_at=row[6],
+                        dimensions=row[7]
+                    )
+                    for row in rows
+                ]
 
     def select_name_list(self) -> List[VectorCollectionRenderParam]:
         with get_db_connection() as conn:
-            cur = conn.cursor()
-            query = sql.SQL("""
-                            SELECT vc.id,
-                                   vc.embedding_id,
-                                   m.model_name,
-                                   vc.collection_name,
-                                   vc.collection_alias,
-                                   vc.collection_description,
-                                   vc.items_number,
-                                   vc.created_at,
-                                   vc.dimensions
-                            FROM {} vc
-                                     LEFT JOIN models m
-                            ON vc.embedding_id = m.id
-                            ORDER BY vc.id;
-                            """).format(
-                sql.Identifier(self.table)
-            )
-            cur.execute(query)
-            rows = cur.fetchall()
-
-            return [
-                VectorCollectionRenderParam(
-                    id=row[0],
-                    embedding_id=row[1],
-                    embedding_name=row[2],
-                    collection_name=row[3],
-                    collection_alias=row[4],
-                    collection_description=row[5],
-                    items_number=row[6],
-                    created_at=row[7],
-                    dimensions=row[8]
+            with conn.cursor() as cur:
+                query = sql.SQL("""
+                                SELECT vc.id,
+                                       vc.embedding_id,
+                                       m.model_name,
+                                       vc.collection_name,
+                                       vc.collection_alias,
+                                       vc.collection_description,
+                                       vc.items_number,
+                                       vc.created_at,
+                                       vc.dimensions
+                                FROM {} vc
+                                         LEFT JOIN models m
+                                ON vc.embedding_id = m.id
+                                ORDER BY vc.id;
+                                """).format(
+                    sql.Identifier(self.table)
                 )
-                for row in rows
-            ]
+                cur.execute(query)
+                rows = cur.fetchall()
+
+                return [
+                    VectorCollectionRenderParam(
+                        id=row[0],
+                        embedding_id=row[1],
+                        embedding_name=row[2],
+                        collection_name=row[3],
+                        collection_alias=row[4],
+                        collection_description=row[5],
+                        items_number=row[6],
+                        created_at=row[7],
+                        dimensions=row[8]
+                    )
+                    for row in rows
+                ]
 
     def insert_collection(self,
                           embedding_id: int = None,
@@ -239,19 +239,19 @@ class VectorCollectionRepository:
             raise BusinessException(f"collection_name: {collection_name} is exist")
 
         with get_db_connection() as conn:
-            cur = conn.cursor()
-            query = sql.SQL("INSERT INTO {} (embedding_id, collection_name, collection_alias, "
-                            "collection_description, items_number, dimensions) "
-                            "VALUES (%s, %s, %s, %s, %s, %s) "
-                            "RETURNING id").format(
-                sql.Identifier(self.table)
-            )
-            cur.execute(query, (embedding_id, collection_name, collection_alias,
-                                collection_description, items_number, dimensions))
-            row = cur.fetchone()
+            with conn.cursor() as cur:
+                query = sql.SQL("INSERT INTO {} (embedding_id, collection_name, collection_alias, "
+                                "collection_description, items_number, dimensions) "
+                                "VALUES (%s, %s, %s, %s, %s, %s) "
+                                "RETURNING id").format(
+                    sql.Identifier(self.table)
+                )
+                cur.execute(query, (embedding_id, collection_name, collection_alias,
+                                    collection_description, items_number, dimensions))
+                row = cur.fetchone()
 
-            collection_id = row[0]
-            logger.info(f"Collection:{collection_id} named {collection_name} successfully added")
+                collection_id = row[0]
+                logger.info(f"Collection:{collection_id} named {collection_name} successfully added")
 
         try:
             v_metadata = {
@@ -275,15 +275,15 @@ class VectorCollectionRepository:
 
     def insert_document(self, user_id, filename, file_size, collection_name):
         with get_db_connection() as conn:
-            cur = conn.cursor()
-            query = sql.SQL("""INSERT INTO {} (user_id, filename, filesize)
-                               VALUES (%s, %s, %s) RETURNING id """).format(
-                sql.Identifier(self.document_table)
-            )
-            cur.execute(query, (user_id, filename, file_size))
-            doc_id = cur.fetchone()[0]
-            self.update_collection(collection_name, number_update=True)
-            return doc_id
+            with conn.cursor() as cur:
+                query = sql.SQL("""INSERT INTO {} (user_id, filename, filesize)
+                                   VALUES (%s, %s, %s) RETURNING id """).format(
+                    sql.Identifier(self.document_table)
+                )
+                cur.execute(query, (user_id, filename, file_size))
+                doc_id = cur.fetchone()[0]
+                self.update_collection(collection_name, number_update=True)
+                return doc_id
 
     def update_collection(self,
                           collection_name: str,
@@ -295,34 +295,34 @@ class VectorCollectionRepository:
             raise BusinessException(f"Collection with {collection_name} does not exist")
 
         with get_db_connection() as conn:
-            cur = conn.cursor()
-            updates = []
-            values = []
+            with conn.cursor() as cur:
+                updates = []
+                values = []
 
-            if collection_alias is not None:
-                updates.append("collection_alias = %s")
-                values.append(collection_alias)
+                if collection_alias is not None:
+                    updates.append("collection_alias = %s")
+                    values.append(collection_alias)
 
-            if collection_description is not None:
-                updates.append("collection_description = %s")
-                values.append(collection_description)
+                if collection_description is not None:
+                    updates.append("collection_description = %s")
+                    values.append(collection_description)
 
-            if number_update:
-                updates.append("items_number = items_number + 1")
+                if number_update:
+                    updates.append("items_number = items_number + 1")
 
-            if not updates:
-                logger.warning(f"No fields to update for collection {collection_name}")
-                return False
+                if not updates:
+                    logger.warning(f"No fields to update for collection {collection_name}")
+                    return False
 
-            values.append(collection_name)
-            query = sql.SQL("UPDATE {} SET {} WHERE collection_name = %s").format(
-                sql.Identifier(self.table),
-                sql.SQL(", ").join(sql.SQL(field) for field in updates)
-            )
-            cur.execute(query, values)
+                values.append(collection_name)
+                query = sql.SQL("UPDATE {} SET {} WHERE collection_name = %s").format(
+                    sql.Identifier(self.table),
+                    sql.SQL(", ").join(sql.SQL(field) for field in updates)
+                )
+                cur.execute(query, values)
 
-            logger.info(f"Collection:{collection_name} successfully updated")
-            return True
+                logger.info(f"Collection:{collection_name} successfully updated")
+                return True
 
     def remove_collection(self, collection_id: int) -> str:
         if check_value_exists(self.table, "id", collection_id) is False:
@@ -330,14 +330,14 @@ class VectorCollectionRepository:
             raise BusinessException(f"Collection with id {collection_id} does not exist")
 
         with get_db_connection() as conn:
-            cur = conn.cursor()
-            query = sql.SQL("DELETE FROM {} WHERE id = %s RETURNING collection_name").format(
-                sql.Identifier(self.table)
-            )
-            cur.execute(query, (collection_id,))
-            collection_name = cur.fetchone()[0]
-            logger.info(f"Collection:{collection_name} successfully deleted")
-            return collection_name
+            with conn.cursor() as cur:
+                query = sql.SQL("DELETE FROM {} WHERE id = %s RETURNING collection_name").format(
+                    sql.Identifier(self.table)
+                )
+                cur.execute(query, (collection_id,))
+                collection_name = cur.fetchone()[0]
+                logger.info(f"Collection:{collection_name} successfully deleted")
+                return collection_name
 
     def remove_by_embedding(self, embedding_id: int):
         if check_value_exists(self.table, "embedding_id", embedding_id) is False:
@@ -345,12 +345,12 @@ class VectorCollectionRepository:
             return
 
         with get_db_connection() as conn:
-            cur = conn.cursor()
-            query = sql.SQL("DELETE FROM {} WHERE embedding_id = %s").format(
-                sql.Identifier(self.table)
-            )
-            cur.execute(query, (embedding_id,))
-            logger.info(f"Collections for embedding_id:{embedding_id} successfully deleted")
+            with conn.cursor() as cur:
+                query = sql.SQL("DELETE FROM {} WHERE embedding_id = %s").format(
+                    sql.Identifier(self.table)
+                )
+                cur.execute(query, (embedding_id,))
+                logger.info(f"Collections for embedding_id:{embedding_id} successfully deleted")
 
 
 if __name__ == '__main__':

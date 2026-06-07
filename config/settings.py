@@ -1,3 +1,5 @@
+from typing import List
+
 from pydantic_settings import BaseSettings
 from pydantic import  Field
 from functools import lru_cache
@@ -29,6 +31,14 @@ class Settings(BaseSettings):
     # 文档策略
     MAX_FILE_SIZE: int = 10 * 1024 * 1024 # 10MB
     MAX_CHUNK_SIZE: int = 50 * 1024 # 50KB
+
+    # API白名单
+    # VALID_API_KEYS: dict[str, str] = {
+    #     ""
+    # }
+    IP_WHITELIST: List[str] = [
+        "192.168.1.0/24"
+    ]
 
 @lru_cache()
 def get_settings() -> Settings:
