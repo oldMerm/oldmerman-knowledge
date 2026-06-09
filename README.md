@@ -5,26 +5,26 @@
 ![img.png](img.png)
 
 基于如下技术栈实现：
-前端(90%vibecoding + 10%微调)：Vue3 + TypeScript(仓库见：https://github.com/oldMerm/oldmerman-assistant)
-后端(几乎都在古法)：Python + FastAPI + PostgreSQL + ChromaDB + ....
+Python + FastAPI + PostgreSQL + ChromaDB(前端见仓库：https://github.com/oldMerm/oldmerman-assistant)
 
 ## 快速了解项目
 
 **1**.目录结构
 
-| 目录名称 | 作用概述 |
+| 目录名称       | 作用概述                   |
 |:----------:|:----------------------:|
-| main.py | 程序主入口，配置路由，中间件 |
-| agents | Agent核心部件，prompt,tool等 |
-| common | Web统一响应封装 |
-| config | 项目部分配置(数据库连接参数等)    |
-| db | 数据库连接池，dao，数据库实体 |
-| middleware | Web端的中间件 |
-| routes | Web路由 |
-| services | Web业务层代码 |
-| utils | 项目使用的工具包 |
+| main.py    | 程序主入口，配置路由，中间件         |
+| agents     | Agent核心部件，prompt，tool等 |
+| common     | Web统一响应封装              |
+| config     | 项目部分配置(数据库连接参数等)       |
+| db         | 数据库连接池，dao，数据库实体       |
+| middleware | Web端的中间件               |
+| routes     | Web路由                  |
+| services   | Web业务层代码               |
+| utils      | 项目使用的工具包               |
 
 **2**.环境变量文件(目前)
+
 ```dotenv
 # Environment /production/test/development
 # production -> 持久化日志到LOGGIN_PATH
@@ -63,5 +63,9 @@ XX_API_KEY=用于调试Agent
 ## email
 
 鄙人不才，望共勉之~~你的一个⭐是我最大的动力😏！！！
-outlook: `oldmerman@outlook.com`
-qq: `oldmerman@qq.com`(使用较多)
+
+
+**outlook**: `oldmerman@outlook.com`
+
+
+**qq**: `oldmerman@qq.com`(使用较多)
