@@ -10,7 +10,6 @@ from functools import lru_cache
 import chromadb
 from chromadb import ClientAPI
 
-from agents.embedding import EmbeddingsGetterParam, get_embeddings_supported
 from config import get_settings
 from utils import get_logger
 
@@ -24,6 +23,7 @@ def get_vector_database() -> ClientAPI:
 
 
 if __name__ == "__main__":
+    from agents.embedding import EmbeddingsGetterParam, get_embeddings_supported
     client = get_vector_database()
 
     e_input = ["广东省东莞市西南部"]

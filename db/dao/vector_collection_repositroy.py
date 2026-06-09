@@ -7,7 +7,7 @@ Created by oldmerman
 
 import hashlib
 import json
-from typing import List, Optional, Any
+from typing import List, Optional
 
 from psycopg2.extras import execute_values
 
@@ -15,7 +15,7 @@ from psycopg2 import sql
 
 from agents.embedding import get_embeddings_supported, EmbeddingsGetterParam
 from common import BusinessException
-from db import get_vector_database
+from db.vector_connection import get_vector_database
 from db.connection import get_db_connection
 from db.dao import ModelsRepository
 from db.dao.common_repository import check_value_exists
@@ -75,7 +75,6 @@ class VectorCollectionRepository:
                 for chunk_id, text, metadata, content_hash in zip(ids, texts, metadatas, content_hashes):
                     insert_data.append((
                         chunk_id,
-                        collection_name,
                         content_hash,
                         json.dumps(metadata) if metadata else None,
                         doc_id
@@ -83,7 +82,7 @@ class VectorCollectionRepository:
                 # 批量插入
                 execute_values(cur, f"""
                     INSERT INTO {self.metadata_table} 
-                    (id, collection_name, content_hash, metadata, doc_id)
+                    (id, content_hash, metadata, doc_id)
                     VALUES %s
                 """, insert_data)
                 conn.commit()
@@ -276,20 +275,19 @@ class VectorCollectionRepository:
     def insert_document(self, user_id, filename, file_size, collection_name):
         with get_db_connection() as conn:
             with conn.cursor() as cur:
-                query = sql.SQL("""INSERT INTO {} (user_id, filename, filesize)
-                                   VALUES (%s, %s, %s) RETURNING id """).format(
+                query = sql.SQL("""INSERT INTO {} (user_id, filename, filesize, collection_name)
+                                   VALUES (%s, %s, %s, %s) RETURNING id """).format(
                     sql.Identifier(self.document_table)
                 )
-                cur.execute(query, (user_id, filename, file_size))
+                cur.execute(query, (user_id, filename, file_size, collection_name))
                 doc_id = cur.fetchone()[0]
-                self.update_collection(collection_name, number_update=True)
                 return doc_id
 
     def update_collection(self,
                           collection_name: str,
                           collection_alias: str = None,
                           collection_description: str = None,
-                          number_update: bool = False) -> bool:
+                          number_update: int = 0) -> bool:
         if check_value_exists(self.table, "collection_name", collection_name) is False:
             logger.error(f"Collection with {collection_name} does not exist")
             raise BusinessException(f"Collection with {collection_name} does not exist")
@@ -307,8 +305,8 @@ class VectorCollectionRepository:
                     updates.append("collection_description = %s")
                     values.append(collection_description)
 
-                if number_update:
-                    updates.append("items_number = items_number + 1")
+                if number_update > 0:
+                    updates.append("items_number = items_number + %s")
 
                 if not updates:
                     logger.warning(f"No fields to update for collection {collection_name}")

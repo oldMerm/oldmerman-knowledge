@@ -1,3 +1,9 @@
+"""Description
+The SQL about table named 'models'
+
+Date: 2026-4-28
+Created by oldmerman
+"""
 from typing import List
 
 from psycopg2 import sql
@@ -7,13 +13,6 @@ from db.dao.common_repository import check_value_exists
 from db.models import ModelRegisterParam
 from db.models.models_param import ModelRenderParam
 from utils import get_logger, AESEncryptUtil
-
-"""Description
-The SQL about table named 'models'
-
-Date: 2026-4-28
-Created by oldmerman
-"""
 
 logger = get_logger(__name__)
 

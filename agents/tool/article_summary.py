@@ -1,25 +1,12 @@
 from langchain.agents import AgentState
 from langchain.agents.middleware import after_model
 from langgraph.prebuilt import ToolRuntime
-from pydantic import BaseModel
 
+from agents.types import ArticleSummaryContext
 from db.connection import get_db_connection
-from db.dao.tokens_usage_repository import TokensUsageRepository
 from utils import get_logger
 
 logger = get_logger(__name__)
-
-PROMPT = """生成**文章摘要**：
-        - 客观陈述研究/内容
-        - 第三人称，200字以内
-        """
-
-
-class ArticleSummaryContext(BaseModel):
-    user_id: str = "02813b57-71c8-4d4a-af16-44132e741fdf"
-    article_id: str
-    article_name: str
-    model_id: int
 
 @after_model
 def refresh_cache(
@@ -50,23 +37,3 @@ def refresh_cache(
 
     except Exception as e:
         logger.error(f"cache {article_id} fail: {str(e)}")
-
-
-@after_model
-def save_token_usage_to_db(
-        state: AgentState,
-        runtime: ToolRuntime[ArticleSummaryContext]
-) -> None:
-    """保存token使用统计到数据库"""
-    last_message = state['messages'][-1]
-    model_id = runtime.context.model_id
-    user_id = runtime.context.user_id
-    if hasattr(last_message, 'usage_metadata'):
-        usage = last_message.usage_metadata
-        tokens = {
-            'prompt_tokens': usage.get('input_tokens', 0),
-            'completion_tokens': usage.get('output_tokens', 0),
-            'total_tokens': usage.get('total_tokens', 0)
-        }
-        dto = TokensUsageRepository.as_dependency()
-        dto.add(user_id=user_id, model_id=model_id, tokens=tokens)

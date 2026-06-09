@@ -1,6 +1,11 @@
+"""Description
+Controller about Users
+
+Date: 2026-4-26
+Created by oldmerman
+"""
 from fastapi import APIRouter, Request
 from fastapi.params import Depends
-from pydantic import BaseModel
 
 from common.Result import Result
 from db.models.user_param import UserSettingParam, UpdateUsernameRequest
@@ -8,13 +13,6 @@ from services import get_user_service
 from services.user_service import UserService
 from utils import UserContext
 from utils.logger import get_logger
-
-"""Description
-Controller about Users
-
-Date: 2026-4-26
-Created by oldmerman
-"""
 
 logger = get_logger(__name__)
 

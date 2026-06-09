@@ -1,3 +1,9 @@
+"""Description
+Intercept the corresponding path and verify the signature
+
+Date: 2026-4-22
+Created by oldmerman
+"""
 from typing import Callable
 
 from fastapi import Request, Response
@@ -8,13 +14,6 @@ from starlette.types import ASGIApp
 from common.Result import Result
 from utils.jwt import verify_token
 
-"""Description
-Intercept the corresponding path and verify the signature
-
-Date: 2026-4-22
-Created by oldmerman
-"""
-
 EXCLUDED_PATHS = [
     "/",
     "/docs",
@@ -22,14 +21,14 @@ EXCLUDED_PATHS = [
     "/hello",
     "/openapi.json",
     "/auth/login", "/auth/register", # /routes/auth
-    "/v1"
+    "/v1",
 ]
 
 
 EXCLUDED_PATH_PREFIXES = [
-    # "/model_group",
-    # "/model",
-    "/model_type"
+    # "/model_type",
+    "/tokens_usage", # token router 调试
+    "/document" # document 调试
 ]
 
 class AuthMiddleware(BaseHTTPMiddleware):

@@ -95,6 +95,8 @@ class VectorManageService:
             doc_id=doc_id
         )
 
+        # 记录文档增量
+        self.__mapper.update_collection(collection_name=collection_name, number_update=len(response.ids))
         # 记录token消耗量
         self.__tokens_usage_mapper.add(user_id, response.model_id, response.tokens)
         return response.ids

@@ -23,6 +23,8 @@ app.include_router(routes.model_router)
 app.include_router(routes.model_type_router)
 app.include_router(routes.vector_manage_router)
 app.include_router(routes.api_simple_agent_router)
+app.include_router(routes.token_usage_router)
+app.include_router(routes.document_router)
 
 # register middleware
 app.add_middleware(ResponseWrapperMiddleware)

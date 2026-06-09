@@ -4,8 +4,6 @@ Model Initialization
 Date: 2026-4-29
 Created by oldmerman
 """
-
-from langchain_core.language_models import BaseChatModel
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
@@ -23,8 +21,8 @@ class ModelCommonParam(BaseModel):
 
 class ModelProvider:
 
-    @staticmethod
-    def get_model(model_id: int = None,
+    @classmethod
+    def get_model(cls, model_id: int = None,
                   model_name: str = None,
                   max_token: int = 1024,
                   temperature: float = 1.2) -> ModelCommonParam:
