@@ -11,13 +11,13 @@ from agents.model_provider import ModelProvider
 from agents.prompt import DIGEST_PROMPT
 from agents.tool import refresh_cache
 from agents.tool.common import save_token_usage_to_db
-from agents.types import ArticleSummaryContext
+from agents.types import ArticleContext
 
 default_param = ModelProvider.get_model(model_name='deepseek-v4-flash', max_token=256)
 default_agent = create_agent(
     model=default_param.model,
     system_prompt=DIGEST_PROMPT,
-    context_schema=ArticleSummaryContext,
+    context_schema=ArticleContext,
     middleware=[
         refresh_cache,
         save_token_usage_to_db
@@ -33,7 +33,7 @@ class ArticleAgentProvider:
             return create_agent(
                 model=ModelProvider.get_model(model_id).model,
                 system_prompt=DIGEST_PROMPT,
-                context_schema=ArticleSummaryContext,
+                context_schema=ArticleContext,
                 middleware=[
                     refresh_cache,
                     save_token_usage_to_db

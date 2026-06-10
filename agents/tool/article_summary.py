@@ -2,7 +2,7 @@ from langchain.agents import AgentState
 from langchain.agents.middleware import after_model
 from langgraph.prebuilt import ToolRuntime
 
-from agents.types import ArticleSummaryContext
+from agents.types import ArticleContext
 from db.connection import get_db_connection
 from utils import get_logger
 
@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 @after_model
 def refresh_cache(
         state: AgentState,
-        runtime: ToolRuntime[ArticleSummaryContext]
+        runtime: ToolRuntime[ArticleContext]
 ) -> None:
     """将文章摘要缓存到数据库"""
     article_id = runtime.context.article_id

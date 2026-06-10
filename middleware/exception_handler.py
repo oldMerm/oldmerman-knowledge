@@ -1,15 +1,17 @@
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
-
-from common.Result import Result, BusinessException
-
 """Description
 The exception handler about the project 
 
 Date: 2026-4-22
 Created by oldmerman
 """
+
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+
+from common.Result import Result, BusinessException
+
+
 
 async def business_exception_handler(request: Request, exc: BusinessException) -> JSONResponse:
     return JSONResponse(

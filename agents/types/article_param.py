@@ -1,5 +1,5 @@
 from agents.types import CommonContext
 
-class ArticleSummaryContext(CommonContext):
+class ArticleContext(CommonContext):
     article_id: str
     article_name: str

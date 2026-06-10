@@ -1,11 +1,3 @@
-import io
-import re
-from typing import List, Dict, Any
-from docx import Document
-import PyPDF2
-
-from config import get_settings
-
 """Description
 Supports txt,md,pdf,docs files processing(discard picture)
 Provide large text chunks, func "split_to_chunks"
@@ -14,6 +6,16 @@ chunk_size ref to "config/settings.py"
 Date: 2026-5-25
 Created by oldmerman
 """
+
+import io
+import re
+from typing import List, Dict, Any
+from docx import Document
+import PyPDF2
+
+from config import get_settings
+
+
 
 settings = get_settings()
 

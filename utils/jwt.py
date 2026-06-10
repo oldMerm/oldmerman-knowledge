@@ -1,3 +1,10 @@
+"""Description
+The package of jwt token
+
+Date: 2026-4-22
+Created by oldmerman
+"""
+
 import os
 from datetime import datetime, timedelta, timezone
 
@@ -6,12 +13,7 @@ from dotenv import load_dotenv
 from fastapi import HTTPException, status
 from pydantic import BaseModel
 
-"""Description
-The package of jwt token
 
-Date: 2026-4-22
-Created by oldmerman
-"""
 
 load_dotenv()
 

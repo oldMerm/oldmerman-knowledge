@@ -32,20 +32,18 @@ class TokensUsageRepository:
                 cur.execute(query, (user_id, model_id, tokens.get("prompt_tokens"),
                                     tokens.get("completion_tokens"), tokens.get("total_tokens")))
 
-    def get_week_token_consume(self):
+    def get_month_token_consume(self):
         with get_db_connection() as conn:
             with conn.cursor() as cur:
                 query = sql.SQL(
                     """SELECT
-                           DATE (created_at), 
-                           SUM (prompt_tokens) AS prompt_tokens_count, 
-                           SUM (completion_tokens) AS completion_tokens_count, 
-                           SUM (total_tokens) AS total_tokens_count
+                           DATE (created_at), SUM (prompt_tokens) AS prompt_tokens_count, SUM (completion_tokens) AS completion_tokens_count, SUM (total_tokens) AS total_tokens_count
                        FROM tokens_usage
                        WHERE
-                           created_at >= CURRENT_DATE - INTERVAL '7 days'
-                         AND
-                           created_at < CURRENT_DATE + INTERVAL '1 day'
+                           created_at >= DATE_TRUNC('month'
+                           , CURRENT_DATE)
+                         AND created_at
+                           < CURRENT_DATE + INTERVAL '1 day'
                        GROUP BY DATE (created_at)
                        ORDER BY DATE (created_at) DESC;"""
                 ).format(
@@ -66,7 +64,7 @@ class TokensUsageRepository:
 
 if __name__ == "__main__":
     dao = TokensUsageRepository()
-    w_list = dao.get_week_token_consume()
+    w_list = dao.get_month_token_consume()
     for item in w_list:
         print(f"time: {item.date}")
         print(f"prompt_tokens: {item.prompt_tokens_consume}")

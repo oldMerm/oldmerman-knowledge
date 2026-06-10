@@ -1,3 +1,10 @@
+"""Description
+Controller about model management
+
+Date: 2026-5-2
+Created by oldmerman
+"""
+
 from typing import List
 
 from fastapi import APIRouter, Request
@@ -11,12 +18,7 @@ from services.model_service import ModelService
 
 from utils.logger import get_logger
 
-"""Description
-Controller about model management
 
-Date: 2026-5-2
-Created by oldmerman
-"""
 
 logger = get_logger(__name__)
 

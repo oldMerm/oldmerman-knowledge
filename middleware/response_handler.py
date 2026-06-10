@@ -1,3 +1,10 @@
+"""Description
+Deal with the response, add request info if not
+
+Date: 2026-4-22
+Created by oldmerman
+"""
+
 from typing import Callable
 
 from fastapi import Request, Response
@@ -7,12 +14,7 @@ from starlette.types import ASGIApp
 
 from common.Result import Result
 
-"""Description
-Deal with the response, add request info if not
 
-Date: 2026-4-22
-Created by oldmerman
-"""
 
 class ResponseWrapperMiddleware(BaseHTTPMiddleware):
     def __init__(self, app: ASGIApp):

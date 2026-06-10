@@ -27,7 +27,6 @@ EXCLUDED_PATHS = [
 
 EXCLUDED_PATH_PREFIXES = [
     # "/model_type",
-    "/tokens_usage", # token router 调试
     "/document" # document 调试
 ]
 

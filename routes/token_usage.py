@@ -24,8 +24,8 @@ def get_tokens_usage_repository() -> TokensUsageRepository:
 
 
 @router.get("")
-def get_week_consume(dao: TokensUsageRepository = Depends(get_tokens_usage_repository)) -> Result[List[TokensUsageCountParam]]:
+def get_month_consume(dao: TokensUsageRepository = Depends(get_tokens_usage_repository)) -> Result[List[TokensUsageCountParam]]:
     return Result.success(
-        data=dao.get_week_token_consume() # 获取一周内每日的token消耗
+        data=dao.get_month_token_consume() # 获取一个月内每日的token消耗
     )
 

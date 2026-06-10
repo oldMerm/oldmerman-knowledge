@@ -1,15 +1,17 @@
-from typing import List
-
-from pydantic_settings import BaseSettings
-from pydantic import  Field
-from functools import lru_cache
-
 """Description
 the common settings about the project
 
 Date: 2026-5-19
 Created by oldmerman
 """
+
+from typing import List
+
+from pydantic_settings import BaseSettings
+from pydantic import  Field
+from functools import lru_cache
+
+
 
 class Settings(BaseSettings):
     """settings"""

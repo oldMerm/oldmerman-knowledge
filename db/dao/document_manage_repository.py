@@ -44,7 +44,7 @@ class DocumentsRepository:
                                           d.filename,
                                           d.filesize,
                                           d.collection_name,
-                                          d.updated_at,
+                                          d.created_at,
                                           COUNT(vm.id)
                                    FROM {} d
                                             LEFT JOIN {} vm
@@ -61,7 +61,7 @@ class DocumentsRepository:
                         filename=row[1],
                         filesize=row[2],
                         collection_name=row[3],
-                        updated_at=row[4],
+                        created_at=row[4],
                         doc_num=row[5]
                     )
                     for row in rows

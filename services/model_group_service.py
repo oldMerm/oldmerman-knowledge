@@ -1,3 +1,10 @@
+"""Description
+The bus code about model_manage
+
+Date: 2026-5-1
+Created by oldmerman
+"""
+
 from typing import List
 
 from fastapi.params import Depends
@@ -8,12 +15,7 @@ from db.entities import ModelsGroup
 from db.models import ModelsGroupRender
 from utils.logger import get_logger
 
-"""Description
-The bus code about model_manage
 
-Date: 2026-5-1
-Created by oldmerman
-"""
 
 logger = get_logger(__name__)
 

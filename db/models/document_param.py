@@ -7,5 +7,5 @@ class DocumentPageParam(BaseModel):
     filename: str
     filesize: int
     collection_name: str
-    updated_at: datetime
+    created_at: datetime
     doc_num: int = 0

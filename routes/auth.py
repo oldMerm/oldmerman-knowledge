@@ -1,3 +1,10 @@
+"""Description
+Controller about auth
+
+Date: 2026-4-23
+Created by oldmerman
+"""
+
 import os
 
 from fastapi import APIRouter, Request
@@ -10,12 +17,7 @@ from services import get_auth_service
 from services.auth_service import AuthService
 from utils.logger import get_logger
 
-"""Description
-Controller about auth
 
-Date: 2026-4-23
-Created by oldmerman
-"""
 
 load_dotenv()
 

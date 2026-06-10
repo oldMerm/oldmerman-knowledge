@@ -1,3 +1,10 @@
+"""Description
+Controller about auth
+
+Date: 2026-4-23
+Created by oldmerman
+"""
+
 import json
 
 from fastapi import APIRouter
@@ -8,17 +15,12 @@ from pydantic import BaseModel
 
 from agents import ArticleAgentProvider
 from agents.article_agent import default_param
-from agents.tool.article_summary import ArticleSummaryContext
+from agents.tool.article_summary import ArticleContext
 from common import Result
 from db.connection import get_db_connection
 from utils.logger import get_logger
 
-"""Description
-Controller about auth
 
-Date: 2026-4-23
-Created by oldmerman
-"""
 
 load_dotenv()
 
@@ -58,7 +60,7 @@ async def chat(dto: ArticleGenBody):
     async def generate_response():
         for chunk in agent.stream(
                 {"messages": [{"role": "user", "content": dto.content}]},
-                context=ArticleSummaryContext(article_id=dto.article_id, article_name=dto.article_name,
+                context=ArticleContext(article_id=dto.article_id, article_name=dto.article_name,
                                               model_id=default_param.model_id), # user_id可覆盖
                 version="v2",
                 stream_mode="messages"
@@ -88,7 +90,7 @@ if __name__ == "__main__":
 
     for chunk in agent.stream(
             {"messages": [{"role": "user", "content": content}]},
-            context=ArticleSummaryContext(article_id="cc1beec11588417aac36f5472100f7c7", article_name="须知",
+            context=ArticleContext(article_id="cc1beec11588417aac36f5472100f7c7", article_name="须知",
                                           model_id=default_param.model_id),
             stream_mode="messages",
             version="v2"

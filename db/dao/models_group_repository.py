@@ -1,3 +1,10 @@
+"""Description
+The SQL about table named 'models_group'
+
+Date: 2026-4-28
+Created by oldmerman
+"""
+
 from typing import List, Optional
 
 from psycopg2 import sql
@@ -7,12 +14,7 @@ from db.entities import ModelsGroup
 from db.models import ModelsGroupRender
 from utils import get_logger, AESEncryptUtil
 
-"""Description
-The SQL about table named 'models_group'
 
-Date: 2026-4-28
-Created by oldmerman
-"""
 
 logger = get_logger(__name__)
 

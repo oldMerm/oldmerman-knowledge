@@ -1,3 +1,10 @@
+"""Description
+The bus code about model_type
+
+Date: 2026-5-16
+Created by oldmerman
+"""
+
 import logging
 from typing import List, Optional
 
@@ -7,12 +14,7 @@ from db.dao.model_type_repository import ModelTypeRepository
 from db.models import ModelsWithTypeParam
 from utils.logger import get_logger
 
-"""Description
-The bus code about model_type
 
-Date: 2026-5-16
-Created by oldmerman
-"""
 
 logger = get_logger(__name__)
 

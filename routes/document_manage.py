@@ -17,7 +17,7 @@ router = APIRouter(prefix="/document", tags=["vector"])
 
 
 @router.get("")
-def get_documents(current: int, size: int,
+def get_documents(current: int = 1, size: int = 10,
                   service: DocumentManageService = Depends(get_document_manage_service)
                   ) -> Result[Page]:
     return Result.success(

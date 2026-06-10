@@ -1,3 +1,10 @@
+"""Description
+The SQL about table named 'model_type'
+
+Date: 2026-5-16
+Created by oldmerman
+"""
+
 from typing import List, Optional
 
 from psycopg2 import sql
@@ -8,12 +15,7 @@ from db.entities.model_type import ModelType
 from db.models import ModelsWithTypeParam, ModelRenderParam1
 from utils import get_logger
 
-"""Description
-The SQL about table named 'model_type'
 
-Date: 2026-5-16
-Created by oldmerman
-"""
 
 logger = get_logger(__name__)
 

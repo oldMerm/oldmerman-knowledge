@@ -1,3 +1,10 @@
+"""Description
+the service of /routes/auth.py
+
+Date: 2026-4-23
+Created by oldmerman
+"""
+
 import uuid
 
 import bcrypt
@@ -9,12 +16,7 @@ from db.entities.user import User, UserStatus
 from utils.jwt import create_token
 from utils.logger import get_logger
 
-"""Description
-the service of /routes/auth.py
 
-Date: 2026-4-23
-Created by oldmerman
-"""
 
 logger = get_logger("services.auth")
 

@@ -1,3 +1,10 @@
+"""Description
+The bus code about model_manage
+
+Date: 2026-5-2
+Created by oldmerman
+"""
+
 from typing import List
 
 from fastapi.params import Depends
@@ -7,12 +14,7 @@ from db.models import ModelRenderParam
 from db.models.models_param import ModelCreateParam
 from utils.logger import get_logger
 
-"""Description
-The bus code about model_manage
 
-Date: 2026-5-2
-Created by oldmerman
-"""
 
 logger = get_logger(__name__)
 

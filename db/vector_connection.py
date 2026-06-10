@@ -37,7 +37,9 @@ if __name__ == "__main__":
     )
 
     # query demo
-    print(client.get_collection("text_collection").query(
+    res = client.get_collection("text_collection").query(
         query_embeddings=get_embeddings_supported(param).data,
         n_results=2
-    ))
+    ).get('documents')
+    print(res)
+    # print(client.get_collection("text_collection").peek())
