@@ -1,8 +1,11 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 import routes
 from config import get_settings
+from db import VectorDatabase
 from utils.logger import get_logger
 from middleware import AuthMiddleware
 from middleware.response_handler import ResponseWrapperMiddleware
@@ -13,7 +16,12 @@ import uvicorn
 logger = get_logger("main")
 
 settings = get_settings()
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    VectorDatabase.reset()
+app = FastAPI(lifespan=lifespan)
 
 # register routers
 app.include_router(routes.login_router)

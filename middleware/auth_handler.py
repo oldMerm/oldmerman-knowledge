@@ -27,7 +27,6 @@ EXCLUDED_PATHS = [
 
 EXCLUDED_PATH_PREFIXES = [
     # "/model_type",
-    "/document" # document 调试
 ]
 
 class AuthMiddleware(BaseHTTPMiddleware):

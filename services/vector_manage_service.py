@@ -8,17 +8,16 @@ Created by oldmerman
 from uuid import uuid4
 from typing import List, Any
 
-from chromadb import ClientAPI
 from fastapi import UploadFile
 from fastapi.params import Depends
 
 from common import BusinessException
 from config import get_settings
-from db import get_vector_database
 from db.dao import VectorCollectionRepository
 from db.dao.tokens_usage_repository import TokensUsageRepository
 from db.models import VectorCollectionRenderParam
-from db.models.vector_manage_param import VectorCollectionUpdateParam, VectorCollectionCreateParam
+from db.models.vector_manage_param import VectorCollectionUpdateParam
+from db.vector_connection import ChromaVectorHelper
 from utils import language_separators
 from utils.file_processor import extract_text
 from utils.logger import get_logger
@@ -33,11 +32,9 @@ class VectorManageService:
 
     def __init__(self,
                  vector_dao: VectorCollectionRepository,
-                 tokens_usage_dao: TokensUsageRepository,
-                 vector_client: ClientAPI):
+                 tokens_usage_dao: TokensUsageRepository):
         self.__mapper = vector_dao
         self.__tokens_usage_mapper = tokens_usage_dao
-        self.__vector_client = vector_client
 
     async def upload(self, user_id: str, collection_name: str, metadatas: dict[str, Any],
                      file: UploadFile, language: str) -> list[str]:
@@ -87,16 +84,43 @@ class VectorManageService:
         batch_texts = [chunk.page_content for chunk in doc_chunks]  # 文档分块数据
         batch_metadatas = [chunk.metadata for chunk in doc_chunks]  # 分块的元数据
 
-        response = await self.__mapper.embeddings(
-            collection_name=collection_name,
-            ids=batch_ids,
-            texts=batch_texts,
-            metadatas=batch_metadatas,
-            doc_id=doc_id
-        )
+        # hash进行重复过滤
+        res = self.__mapper.filter_exist_hash(batch_ids, batch_texts, collection_name=collection_name, metadatas=batch_metadatas)
+        filter_ids = res.get("ids")
+        filter_documents = res.get("documents")
+        filter_metadatas = res.get("metadatas")
+        filter_content_hashes = res.get("content_hashes")
+
+        if len(filter_ids) == 0:
+            logger.warning("documents are exist in DB")
+            raise BusinessException("documents are exist in DB")
+
+        helper = None
+        try:
+            # 入库
+            self.__mapper.embeddings_record(
+                ids=filter_ids,
+                texts=filter_documents,
+                metadatas=filter_metadatas,
+                doc_id=doc_id,
+                content_hashes=filter_content_hashes
+            )
+
+            # 入向量库
+            helper = ChromaVectorHelper(collection_name=collection_name)
+            response = await helper.add(
+                ids=filter_ids,
+                documents=filter_documents,
+                metadatas=filter_metadatas
+            )
+        except ValueError as e:
+            self.__mapper.remove_embeddings_record(doc_id)
+            helper.delete(filter_ids)
+            logger.error(f"Failed to add document in DB: {e}")
+            raise BusinessException("Failed to add document in DB: {e}")
 
         # 记录文档增量
-        self.__mapper.update_collection(collection_name=collection_name, number_update=len(response.ids))
+        self.__mapper.update_collection(collection_name=collection_name, number_update=len(filter_ids))
         # 记录token消耗量
         self.__tokens_usage_mapper.add(user_id, response.model_id, response.tokens)
         return response.ids
@@ -112,29 +136,48 @@ class VectorManageService:
             logger.error("Invalid update param because is None")
             raise BusinessException("Invalid update param because is None")
 
+        dimensions = dto.dimensions
+        collection_alias = dto.collection_alias
         collection_id = self.__mapper.insert_collection(
             embedding_id=embedding_id,
             collection_name=collection_name,
-            collection_alias=dto.collection_alias,
-            collection_description=dto.collection_description,
+            collection_alias=collection_alias,
+            collection_description=collection_desc,
             items_number=0,
-            dimensions=dto.dimensions
+            dimensions=dimensions
         )
+
+        try:
+            v_metadata = {
+                "embedding_id": embedding_id,
+                "collection_description": collection_desc,
+                "dimensions": str(dimensions)
+            }
+            if collection_alias is not None:
+                v_metadata["collection_alias"] = collection_alias
+
+            ChromaVectorHelper.create_collection(
+                name=collection_name,
+                metadata=v_metadata
+            )
+        except Exception:
+            self.__mapper.remove_collection(collection_id)
+            raise BusinessException(
+                f"collection added fail, because collection_name:{collection_name} is exist in vector database")
 
         return collection_id
 
     def remove_collection(self, collection_id: int):
         collection_name = self.__mapper.remove_collection(collection_id=collection_id)
-        self.__vector_client.delete_collection(collection_name)
+        ChromaVectorHelper.delete_collection(collection_name=collection_name)
         logger.info(f"remove collection:{collection_name} success")
 
 
 def get_vector_manage_service(
         vector_dao: VectorCollectionRepository = Depends(),
         tokens_usage_dao: TokensUsageRepository = Depends(),
-        vector_client: ClientAPI = Depends(get_vector_database)
 ) -> VectorManageService:
-    return VectorManageService(vector_dao, tokens_usage_dao,vector_client)
+    return VectorManageService(vector_dao, tokens_usage_dao)
 
 
 if __name__ == "__main__":

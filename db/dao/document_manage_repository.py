@@ -6,8 +6,8 @@ Created by oldmerman
 """
 from psycopg2 import sql
 
-from db import get_vector_database
 from db.connection import get_db_connection
+from db.dao import VectorCollectionRepository
 from db.models import DocumentPageParam
 from utils import get_logger
 
@@ -18,7 +18,6 @@ class DocumentsRepository:
     def __init__(self):
         self.table = 'documents'
         self.detail_table = 'vector_metadata'
-        self.vector_client = get_vector_database()
 
     @classmethod
     def as_dependency(cls):
@@ -68,6 +67,7 @@ class DocumentsRepository:
                 ]
 
     def delete_document(self, doc_id):
+        from db.vector_connection import ChromaVectorHelper
         with get_db_connection() as conn:
             try:
                 with conn.cursor() as cur:
@@ -82,7 +82,9 @@ class DocumentsRepository:
                     cur.execute(delete_detail, (doc_id,))
                     rows = cur.fetchall()
                     delete_detail_ids = [row[0] for row in rows]
-                    self.vector_client.get_collection(collection_name).delete(ids=delete_detail_ids)
+                    VectorCollectionRepository().update_collection(collection_name=collection_name,
+                                                                   number_update=-len(delete_detail_ids))
+                    ChromaVectorHelper(collection_name).delete(delete_detail_ids)
 
             except Exception as e:
                 logger.error(f"delete document failed, {e}")

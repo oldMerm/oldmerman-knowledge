@@ -4,6 +4,8 @@ Model Initialization
 Date: 2026-4-29
 Created by oldmerman
 """
+from functools import lru_cache
+
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
@@ -21,11 +23,17 @@ class ModelCommonParam(BaseModel):
 
 class ModelProvider:
 
+    DEFAULT_MODEL_NAME = "deepseek-v4-flash"
+
     @classmethod
+    @lru_cache(maxsize=5)
     def get_model(cls, model_id: int = None,
                   model_name: str = None,
                   max_token: int = 1024,
                   temperature: float = 1.2) -> ModelCommonParam:
+        if model_name is None and model_id is None:
+            model_name = cls.DEFAULT_MODEL_NAME
+
         if temperature > 2 or temperature < 0:
             logger.warning(f"Invalid model temperature: {temperature}")
             raise ValueError(f"Invalid model temperature: {temperature}")

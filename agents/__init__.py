@@ -1,5 +1,5 @@
-from .article_agent import ArticleAgentProvider
+from .article_agent import get_digest_agent
 
 __all__ = [
-    "ArticleAgentProvider"
+    "get_digest_agent"
 ]
