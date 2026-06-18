@@ -10,3 +10,4 @@ from pydantic import BaseModel
 class CommonContext(BaseModel):
     user_id: str = "02813b57-71c8-4d4a-af16-44132e741fdf"
     model_id: int
+    model_name: str

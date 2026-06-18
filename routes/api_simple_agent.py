@@ -52,11 +52,12 @@ async def chat(dto: ArticleGenBody):
             if row:
                 return Result.success(data=row[0])
 
+    param = ModelProvider.get_model()
     async def generate_response():
         for chunk in get_digest_agent().stream(
                 {"messages": [{"role": "user", "content": dto.content}]},
                 context=ArticleContext(article_id=dto.article_id, article_name=dto.article_name,
-                                              model_id=ModelProvider.get_model().model_id), # user_id可覆盖
+                                              model_id=param.model_id, model_name=param.model_name), # user_id可覆盖
                 version="v2",
                 stream_mode="messages"
         ):
@@ -80,12 +81,12 @@ async def chat(dto: ArticleGenBody):
 
 if __name__ == "__main__":
     # 打开文件并读取内容
-    with open(r'C:\Users\asus\Desktop\博客部署\文章\须知.md', 'r', encoding='utf-8') as file:
+    with open(r'C:\Users\asus\Desktop\博客部署\文章\灰沙随水至 青田依水生.md', 'r', encoding='utf-8') as file:
         content = file.read()
 
     for chunk in get_digest_agent().stream(
             {"messages": [{"role": "user", "content": content}]},
-            context=ArticleContext(article_id="cc1beec11588417aac36f5472100f7c7", article_name="须知",
+            context=ArticleContext(article_id="cc1babd11588417aac36f5472100f7c7", article_name="灰沙随水至 青田依水生",
                                           model_id=ModelProvider.get_model().model_id),
             stream_mode="messages",
             version="v2"

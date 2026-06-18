@@ -7,6 +7,7 @@ from .model_type import router as model_type_router
 from .vector_manage import router as vector_manage_router
 from .api_simple_agent import router as api_simple_agent_router
 from .document_manage import router as document_router
+from .chat import router as chat_router
 
 __all__ = ["login_router",
            "user_router",
@@ -14,4 +15,5 @@ __all__ = ["login_router",
            "token_usage_router",
            "vector_manage_router",
            "api_simple_agent_router",
-           "document_router"]
+           "document_router",
+           "chat_router"]
