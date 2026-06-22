@@ -20,10 +20,10 @@ class DocumentManageService:
                  dao: DocumentsRepository):
         self.__mapper = dao
 
-    def page(self, current, size):
+    def page(self, current, size, collection_name):
         totals = self.__mapper.get_totals()
         start = (current - 1) * size
-        data = self.__mapper.page(start, size)
+        data = self.__mapper.page(start, size, collection_name)
         return Page(
             current=current,
             size=size,

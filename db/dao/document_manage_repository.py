@@ -36,23 +36,37 @@ class DocumentsRepository:
                 else:
                     return 0
 
-    def page(self, start, size):
+    def page(self, start, size, collection_name):
         with get_db_connection() as conn:
             with conn.cursor() as cur:
-                query = sql.SQL("""SELECT d.id,
-                                          d.filename,
-                                          d.filesize,
-                                          d.collection_name,
-                                          d.created_at,
-                                          COUNT(vm.id)
-                                   FROM {} d
+                base_query = sql.SQL("""SELECT d.id,
+                                               d.filename,
+                                               d.filesize,
+                                               d.collection_name,
+                                               d.created_at,
+                                               COUNT(vm.id)
+                                        FROM {} d
                                             LEFT JOIN {} vm
-                                   ON d.id = vm.doc_id
-                                   GROUP BY d.id LIMIT %s
-                                   OFFSET %s;""").format(
+                                        ON d.id = vm.doc_id""").format(
                     sql.Identifier(self.table), sql.Identifier(self.detail_table)
                 )
-                cur.execute(query, (size, start))
+
+                # 动态添加 WHERE 条件
+                where_clause = sql.SQL("")
+                params = []
+
+                if collection_name:
+                    where_clause = sql.SQL("WHERE d.collection_name = %s")
+                    params.append(collection_name)
+
+                query = sql.SQL("{} {} GROUP BY d.id LIMIT %s OFFSET %s;").format(
+                    base_query,
+                    where_clause
+                )
+
+                params.extend([size, start])
+
+                cur.execute(query, tuple(params))
                 rows = cur.fetchall()
                 return [
                     DocumentPageParam(
@@ -93,4 +107,5 @@ class DocumentsRepository:
 
 
 if __name__ == "__main__":
-    DocumentsRepository().delete_document('d191749f-e9ed-4fcf-8a77-98a4d1a36f1c')
+    res = DocumentsRepository().page(0, 5, collection_name="text_collection")
+    print(res)

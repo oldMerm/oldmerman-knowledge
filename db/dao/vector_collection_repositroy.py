@@ -114,9 +114,8 @@ class VectorCollectionRepository:
                 delete = sql.SQL("DELETE FROM {} WHERE id = %s").format(
                     sql.Identifier(self.document_table)
                 )
-                cur.execute(delete, (doc_id, ))
+                cur.execute(delete, (doc_id,))
                 logger.info("Successfully rollback DB records")
-
 
     def select_by_id(self, collection_id: int) -> Optional[VectorCollection]:
         with get_db_connection() as conn:
@@ -316,8 +315,21 @@ class VectorCollectionRepository:
                 cur.execute(query, (embedding_id,))
                 logger.info(f"Collections for embedding_id:{embedding_id} successfully deleted")
 
+    def simple_select_name_list(self):
+        with (get_db_connection() as conn):
+            with conn.cursor() as cur:
+                query = sql.SQL("SELECT collection_name FROM {}").format(
+                    sql.Identifier(self.table)
+                )
+                cur.execute(query)
+                rows = cur.fetchall()
+                return [
+                    row[0]
+                    for row in rows
+                ]
+
 
 if __name__ == '__main__':
     vr = VectorCollectionRepository()
-    res = vr.update_collection(collection_name="text_collection", number_update=True)
+    res = vr.simple_select_name_list()
     print(res)

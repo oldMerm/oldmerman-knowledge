@@ -172,6 +172,8 @@ class VectorManageService:
         ChromaVectorHelper.delete_collection(collection_name=collection_name)
         logger.info(f"remove collection:{collection_name} success")
 
+    def get_collections(self):
+        return self.__mapper.simple_select_name_list()
 
 def get_vector_manage_service(
         vector_dao: VectorCollectionRepository = Depends(),

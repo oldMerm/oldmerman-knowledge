@@ -44,6 +44,14 @@ def get_render_collection(service: VectorManageService = Depends(get_vector_mana
     )
 
 
+@router.get("/list")
+def get_collections(service: VectorManageService = Depends(get_vector_manage_service)
+                    ) -> Result[List[str]]:
+    return Result.success(
+        data=service.get_collections()
+    )
+
+
 @router.post("")
 def insert_collection(dto: VectorCollectionUpdateParam = Body(description="向量集合更新对应实体"),
                       service: VectorManageService = Depends(get_vector_manage_service)
