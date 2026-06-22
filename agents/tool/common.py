@@ -11,12 +11,15 @@ from langgraph.prebuilt import ToolRuntime
 from agents.types import CommonContext
 from db.dao.tokens_usage_repository import TokensUsageRepository
 
+# TODO 可能有多个AIMessage产生token消耗，但只记录了lastMessage...
+
 @after_model
 def save_token_usage_to_db(
         state: AgentState,
         runtime: ToolRuntime[CommonContext]
 ) -> None:
     """保存token使用统计到数据库"""
+    print(state['messages'])
     last_message = state['messages'][-1]
     model_id = runtime.context.model_id
     user_id = runtime.context.user_id

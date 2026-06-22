@@ -13,8 +13,7 @@ from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
-from agents.article_agent import get_digest_agent
-from agents.model_provider import ModelProvider
+from agents import AgentsFactory, AgentType
 from agents.tool.article_summary import ArticleContext
 from common import Result
 from db.connection import get_db_connection
@@ -52,9 +51,10 @@ async def chat(dto: ArticleGenBody):
             if row:
                 return Result.success(data=row[0])
 
-    param = ModelProvider.get_model()
     async def generate_response():
-        for chunk in get_digest_agent().stream(
+        factory = AgentsFactory()
+        param = factory.build_agent(AgentType.COMMON)
+        for chunk in param.agent.stream(
                 {"messages": [{"role": "user", "content": dto.content}]},
                 context=ArticleContext(article_id=dto.article_id, article_name=dto.article_name,
                                               model_id=param.model_id, model_name=param.model_name), # user_id可覆盖
@@ -84,10 +84,12 @@ if __name__ == "__main__":
     with open(r'C:\Users\asus\Desktop\博客部署\文章\灰沙随水至 青田依水生.md', 'r', encoding='utf-8') as file:
         content = file.read()
 
-    for chunk in get_digest_agent().stream(
+    factory = AgentsFactory()
+    param = factory.build_agent(AgentType.COMMON)
+    for chunk in param.agent.stream(
             {"messages": [{"role": "user", "content": content}]},
             context=ArticleContext(article_id="cc1babd11588417aac36f5472100f7c7", article_name="灰沙随水至 青田依水生",
-                                          model_id=ModelProvider.get_model().model_id),
+                                          model_id=param.model_id, model_name=param.model_name),
             stream_mode="messages",
             version="v2"
     ):

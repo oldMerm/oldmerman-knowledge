@@ -10,7 +10,7 @@ from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 from starlette.responses import StreamingResponse
 
-from agents import get_common_agent
+from agents import AgentsFactory, AgentType
 from agents.prompt import COMMON_PROMPT
 from agents.types import CommonContext
 from db import ChromaVectorHelper
@@ -33,7 +33,8 @@ async def chat(dto: OChatRequest, req: Request):
     if user_prompt is None or collection_name is None:
         return None
 
-    param = get_common_agent()
+    factory = AgentsFactory()
+    param = factory.build_agent(AgentType.COMMON)
     documents = ChromaVectorHelper(collection_name=collection_name).query([user_prompt]).get("documents")
     system_msg = f"{COMMON_PROMPT}, Use this context:\n{documents}"
 

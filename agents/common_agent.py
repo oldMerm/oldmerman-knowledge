@@ -1,18 +1,9 @@
-from typing import Any
-
 from anyio.functools import lru_cache
 from langchain.agents import create_agent
-from pydantic import BaseModel
 
 from agents.model_provider import ModelProvider
 from agents.tool import save_token_usage_to_db
-from agents.types import CommonContext
-
-
-class AgentParam(BaseModel):
-    agent: Any
-    model_id: int
-    model_name: str
+from agents.types import CommonContext, AgentParam
 
 
 @lru_cache(maxsize=10)

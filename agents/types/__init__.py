@@ -1,7 +1,7 @@
-from .common import CommonContext
+from .common import CommonContext, AgentParam
 from .article_param import ArticleContext
 
 __all__ = [
-    "CommonContext",
+    "CommonContext", "AgentParam",
     "ArticleContext"
 ]
