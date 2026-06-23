@@ -11,7 +11,6 @@ from fastapi import APIRouter, UploadFile, Request, Form
 from fastapi.params import Depends, Body
 
 from common import Result
-from db.entities import VectorCollection
 from db.models import VectorCollectionUpdateParam, VectorCollectionRenderParam
 from services.vector_manage_service import VectorManageService, get_vector_manage_service
 from utils import UserContext

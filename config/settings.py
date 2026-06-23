@@ -12,7 +12,6 @@ from pydantic import  Field
 from functools import lru_cache
 
 
-
 class Settings(BaseSettings):
     """settings"""
 
@@ -33,6 +32,9 @@ class Settings(BaseSettings):
     # 文档策略
     MAX_FILE_SIZE: int = 10 * 1024 * 1024 # 10MB
     MAX_CHUNK_SIZE: int = 50 * 1024 # 50KB
+    # 向量和重排序
+    EMBEDDING_RESULT_N: int = 10
+    RERANK_TOP_N: int = 5
 
     # API白名单
     # VALID_API_KEYS: dict[str, str] = {

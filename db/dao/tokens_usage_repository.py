@@ -29,8 +29,8 @@ class TokensUsageRepository:
                     sql.Identifier(self.table)
                 )
 
-                cur.execute(query, (user_id, model_id, tokens.get("prompt_tokens"),
-                                    tokens.get("completion_tokens"), tokens.get("total_tokens")))
+                cur.execute(query, (user_id, model_id, tokens.get("prompt_tokens", 0),
+                                    tokens.get("completion_tokens", 0), tokens.get("total_tokens", 0)))
 
     def get_month_token_consume(self):
         with get_db_connection() as conn:

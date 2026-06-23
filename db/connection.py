@@ -6,11 +6,8 @@ from psycopg2 import pool
 from dotenv import load_dotenv
 
 from config import get_settings
-from utils.logger import get_logger
 
 load_dotenv()
-
-logger = get_logger("db.connection")
 
 _connection_pool = None
 
@@ -22,13 +19,11 @@ settings = get_settings()
 def init_db():
     global _connection_pool
 
-    logger.info("Initializing database connection pool...")
     _connection_pool = psycopg2.pool.SimpleConnectionPool(
         minconn=1,
         maxconn=settings.MAX_DATABASE_POOL_SIZE,
         dsn=DATABASE_URL
     )
-    logger.info("Database connection pool initialized")
 
 
 def get_connection():

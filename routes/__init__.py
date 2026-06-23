@@ -5,7 +5,7 @@ from .token_usage import router as token_usage_router
 from .model_group import router as model_group_router
 from .model_type import router as model_type_router
 from .vector_manage import router as vector_manage_router
-from .api_simple_agent import router as api_simple_agent_router
+from .api import router as api_simple_agent_router
 from .document_manage import router as document_router
 from .chat import router as chat_router
 

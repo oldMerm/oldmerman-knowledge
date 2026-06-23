@@ -17,6 +17,7 @@ from db.models import VectorCollectionCreateParam
 from utils import get_logger
 
 logger = get_logger(__name__)
+Settings = get_settings()
 
 
 @lru_cache
@@ -88,7 +89,7 @@ class ChromaVectorHelper:
     def delete(self, ids: List[str]):
         self.collection.delete(ids=ids)
 
-    def query(self, messages: List[str],number: int = 5):
+    def query(self, messages: List[str],number: int = Settings.EMBEDDING_RESULT_N):
         query_param = self.embedding_param
         query_param.doc = messages
         return self.collection.query(

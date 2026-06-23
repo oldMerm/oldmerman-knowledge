@@ -19,7 +19,6 @@ def save_token_usage_to_db(
         runtime: ToolRuntime[CommonContext]
 ) -> None:
     """保存token使用统计到数据库"""
-    print(state['messages'])
     last_message = state['messages'][-1]
     model_id = runtime.context.model_id
     user_id = runtime.context.user_id

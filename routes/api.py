@@ -52,8 +52,7 @@ async def chat(dto: ArticleGenBody):
                 return Result.success(data=row[0])
 
     async def generate_response():
-        factory = AgentsFactory()
-        param = factory.build_agent(AgentType.COMMON)
+        param = AgentsFactory().build_agent(AgentType.DIGEST)
         for chunk in param.agent.stream(
                 {"messages": [{"role": "user", "content": dto.content}]},
                 context=ArticleContext(article_id=dto.article_id, article_name=dto.article_name,
@@ -85,7 +84,7 @@ if __name__ == "__main__":
         content = file.read()
 
     factory = AgentsFactory()
-    param = factory.build_agent(AgentType.COMMON)
+    param = factory.build_agent(AgentType.DIGEST)
     for chunk in param.agent.stream(
             {"messages": [{"role": "user", "content": content}]},
             context=ArticleContext(article_id="cc1babd11588417aac36f5472100f7c7", article_name="灰沙随水至 青田依水生",

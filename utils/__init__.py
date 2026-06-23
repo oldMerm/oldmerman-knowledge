@@ -5,6 +5,7 @@ from .user_context import UserContext
 from .language import language_separators
 from .file_processor import extract_text, split_to_chunks
 from .list_separator import ListSeparator
+from .system_config import get_config_client
 
 __all__ = ["get_logger",
            "create_token", "verify_token", "get_jwt_secret", "TokenData",
@@ -12,4 +13,5 @@ __all__ = ["get_logger",
            "UserContext",
            "language_separators",
            "extract_text", "split_to_chunks",
-           "ListSeparator"]
+           "ListSeparator",
+           "get_config_client"]
