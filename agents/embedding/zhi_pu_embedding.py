@@ -10,7 +10,7 @@ import os
 from dotenv import load_dotenv
 from zai import ZhipuAiClient
 
-from agents.embedding.common import EmbeddingsGetterParam, EmbeddingsResponseParam
+from agents.embedding.embedding_common import EmbeddingsGetterParam, EmbeddingsResponseParam
 from utils import ListSeparator
 
 load_dotenv()

@@ -12,9 +12,10 @@ from starlette.responses import StreamingResponse
 
 from agents import AgentsFactory, AgentType
 from agents.prompt import COMMON_PROMPT
+from agents.rerank.rerank_provider import rerank
 from agents.types import CommonContext
 from db import ChromaVectorHelper
-from utils import get_logger
+from utils import get_logger, ListSeparator
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/chat", tags=["agent"])
@@ -36,7 +37,13 @@ async def chat(dto: OChatRequest, req: Request):
     factory = AgentsFactory()
     param = factory.build_agent(AgentType.COMMON)
     documents = ChromaVectorHelper(collection_name=collection_name).query([user_prompt]).get("documents")
-    system_msg = f"{COMMON_PROMPT}, Use this context:\n{documents}"
+    print(documents)
+    # 重排序，根据系统配置判断，若不开启则会原样返回
+    ranked_document = rerank(user_prompt, ListSeparator.convert_str_list(documents), client_ip)
+    print(ranked_document)
+
+    # 构建系统提示词
+    system_msg = f"{COMMON_PROMPT}, Use this context:\n{ranked_document}"
 
     async def generate_response():
         for chunk in param.agent.stream(
@@ -55,7 +62,6 @@ async def chat(dto: OChatRequest, req: Request):
                 if node_type == 'model':
                     token_text = getattr(token, 'content', '') or getattr(token, 'text', '')
                     if token_text:
-                        print(token_text)
                         yield f"data: {json.dumps({'chunk': token_text, 'type': 'content'})}\n\n"
                 elif node_type == 'tool':
                     pass

@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     MAX_CHUNK_SIZE: int = 50 * 1024 # 50KB
     # 向量和重排序
     EMBEDDING_RESULT_N: int = 10
-    RERANK_TOP_N: int = 5
+    RERANK_TOP_N: int = 4
 
     # API白名单
     # VALID_API_KEYS: dict[str, str] = {

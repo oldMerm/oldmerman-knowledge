@@ -15,6 +15,7 @@ logger = get_logger(__name__)
 Settings = get_settings()
 RERANK_CONFIG_KEY = "rerank_config"
 
+
 def set_rerank(model_id: int, user_id: str):
     dao = ModelsRepository.as_dependency()
     model_param = dao.select_model(model_id)
@@ -25,7 +26,8 @@ def set_rerank(model_id: int, user_id: str):
         "base_url": model_param.base_url,
         "api_key": model_param.api_key,
     }
-    get_config_client().set_config(RERANK_CONFIG_KEY, metadata, "重排序模型的相关配置，如是否开启，请求所需数据等", user_id)
+    get_config_client().set_config(RERANK_CONFIG_KEY, metadata, user_id,"重排序模型的相关配置，如是否开启，请求所需数据等")
+
 
 def rerank(query: str, documents: list[str], user_id: str):
     metadata = get_config_client().get_config(RERANK_CONFIG_KEY)
@@ -77,7 +79,6 @@ if __name__ == "__main__":
     # 'usage': {'completion_tokens': 0, 'prompt_tokens': 723, 'total_tokens': 723}}
     m_query = "如何有效预防和管理高血压？"
     m_documents = [
-
 
         # 2. 高度相关 - 具体饮食建议
         "DASH饮食（得舒饮食）被证明能有效降低血压，强调多吃蔬菜、水果、全谷物和低脂乳制品，减少红肉和甜食。",

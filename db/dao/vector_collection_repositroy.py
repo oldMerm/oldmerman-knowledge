@@ -82,7 +82,7 @@ class VectorCollectionRepository:
             "content_hashes": new_hashes
         }
 
-    def embeddings_record(self, ids, texts, metadatas, content_hashes, doc_id):
+    def embeddings_record(self, ids, texts, metadatas, content_hashes, doc_id, colletion_name):
         # 批量入库新文档元数据
         with get_db_connection() as conn:
             with conn.cursor() as cur:
@@ -93,12 +93,13 @@ class VectorCollectionRepository:
                         chunk_id,
                         content_hash,
                         json.dumps(metadata) if metadata else None,
-                        doc_id
+                        doc_id,
+                        colletion_name
                     ))
                 # 批量插入
                 execute_values(cur, f"""
                     INSERT INTO {self.metadata_table} 
-                    (id, content_hash, metadata, doc_id)
+                    (id, content_hash, metadata, doc_id, colletion_name)
                     VALUES %s
                 """, insert_data)
                 conn.commit()

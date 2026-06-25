@@ -103,7 +103,8 @@ class VectorManageService:
                 texts=filter_documents,
                 metadatas=filter_metadatas,
                 doc_id=doc_id,
-                content_hashes=filter_content_hashes
+                content_hashes=filter_content_hashes,
+                colletion_name=collection_name
             )
 
             # 入向量库

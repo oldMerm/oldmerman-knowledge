@@ -40,16 +40,8 @@ def extract_text_from_pdf(file_bytes: bytes) -> str:
 
 def extract_text_from_txt(file_bytes: bytes) -> str:
     """从 txt 提取文本"""
-    return file_bytes.decode('utf-8', errors='ignore')
-
-def extract_text_from_md(file_bytes: bytes, remove_images: bool = True) -> str:
-    """从 md 提取文本，可选删除图片语法"""
-    text = file_bytes.decode('utf-8', errors='ignore')
-    if remove_images:
-        # 删除 ![alt](url)
-        pattern = r'!\[.*?\]\(.*?\)'
-        text = re.sub(pattern, '', text)
-    return text
+    origin_text = file_bytes.decode('utf-8', errors='ignore')
+    return clean_for_embedding(origin_text)
 
 def extract_text(file_bytes: bytes, filename: str) -> str:
     """
@@ -100,6 +92,16 @@ def split_to_chunks(file_bytes: bytes, filename: str) -> List[Dict[str, Any]]:
         })
 
     return chunks
+
+def clean_for_embedding(text: str) -> str:
+    """清洗文本用于向量化和检索"""
+    # 压缩连续换行（3个以上 → 2个）
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    # 去除行首行尾空白
+    text = text.strip()
+    # 压缩连续空格（3个以上 → 1个）
+    text = re.sub(r' {3,}', ' ', text)
+    return text
 
 if __name__ == "__main__":
     with open(r"C:\Users\asus\Desktop\博客部署\文章\java并发.md",

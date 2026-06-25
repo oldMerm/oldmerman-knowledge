@@ -36,3 +36,13 @@ class ListSeparator:
             return []
 
         return [item for sublist in chunks for item in sublist]
+
+    @staticmethod
+    def convert_str_list(o_list: list[list[str]]):
+        if len(o_list) == 0: return []
+        str_list = []
+        for list_item in o_list:
+            for i in list_item:
+                str_list.append(i)
+        return str_list
+

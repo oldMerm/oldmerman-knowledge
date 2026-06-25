@@ -4,9 +4,8 @@ the vector client about the project
 Date: 2026-5-19
 Created by oldmerman
 """
-import os
 from functools import lru_cache
-from typing import List, Any
+from typing import Any
 
 import chromadb
 from chromadb.api import ClientAPI
@@ -67,9 +66,9 @@ class ChromaVectorHelper:
             doc=[]
         )
 
-    async def add(self, ids: List[str] = None,
-            documents: List[Any] = None,
-            metadatas: List[dict[str, Any]] = None) -> VectorCollectionCreateParam:
+    def add(self, ids: list[str] = None,
+            documents: list[Any] = None,
+            metadatas: list[dict[str, Any]] = None) -> VectorCollectionCreateParam:
         update_param = self.embedding_param
         update_param.doc = documents
         embeddings_with_metadata = get_embeddings_supported(update_param)  # 获取统一响应的数据
@@ -86,22 +85,32 @@ class ChromaVectorHelper:
             tokens=embeddings_with_metadata.tokens
         )
 
-    def delete(self, ids: List[str]):
+    def delete(self, ids: list[str]):
         self.collection.delete(ids=ids)
 
-    def query(self, messages: List[str],number: int = Settings.EMBEDDING_RESULT_N):
+    def query(self, messages: list[str],number: int = Settings.EMBEDDING_RESULT_N):
         query_param = self.embedding_param
         query_param.doc = messages
+        res_param = get_embeddings_supported(query_param)
         return self.collection.query(
-            query_embeddings=get_embeddings_supported(query_param).data,
+            query_embeddings=res_param.data,
             n_results=number
         )
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     e_input = ["鱼人博客V1.2.5版本讲了什么？"]
 
     # query demo
-    res = ChromaVectorHelper("text_collection").query(e_input, 2).get("documents")
-    print(res)
+    p_res = ChromaVectorHelper("small_text_collection").collection.get(
+        ids="e09b284b-d9bf-4404-887d-237479106d41"
+    )
+    print(p_res)
+    # res = p_res.get("documents")
+    #
+    # m_documents = []
+    # for list1 in res:
+    #     for item in list1:
+    #         m_documents.append(item)
+    # print(m_documents)
     # print(client.get_collection("text_collection").peek())
