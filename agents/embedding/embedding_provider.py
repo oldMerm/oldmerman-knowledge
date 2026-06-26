@@ -8,7 +8,8 @@ from typing import Optional
 from urllib.parse import urlparse
 
 from agents.embedding.alibaba_embedding import AlibabaEmbedding
-from agents.embedding.embedding_common import EmbeddingsGetterParam, embedding_support, EMB_SUPPORT_ENUM, EmbeddingsResponseParam
+from agents.embedding.embedding_common import EmbeddingsGetterParam, embedding_support, EMB_SUPPORT_ENUM, \
+    EmbeddingsResponseParam, fuzzy_embedding_support
 from agents.embedding.zhi_pu_embedding import ZhiPuEmbedding
 from utils import get_logger
 
@@ -31,11 +32,11 @@ def get_embeddings_supported(param: EmbeddingsGetterParam) -> Optional[Embedding
 
     # 模糊匹配
     pre_key = None
-    for key in embedding_support.keys():
+    for key in fuzzy_embedding_support.keys():
         if base_url in key:
             pre_key = key
 
-    match embedding_support.get(pre_key):
+    match fuzzy_embedding_support.get(pre_key):
         case EMB_SUPPORT_ENUM.ALIBABA:
             return AlibabaEmbedding.embeddings(param)
 

@@ -9,7 +9,7 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 
-from agents.embedding import EmbeddingsGetterParam, EmbeddingsResponseParam, EmbeddingUtils
+from agents.embedding.embedding_common import EmbeddingsGetterParam, EmbeddingsResponseParam, EmbeddingUtils
 from utils import ListSeparator
 
 load_dotenv()

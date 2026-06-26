@@ -9,6 +9,7 @@ from typing import List
 
 from fastapi.params import Depends
 
+from db.dao import ModelTypeRepository, ModelTypeEnum
 from db.dao.models_repository import ModelsRepository
 from db.models import ModelRenderParam
 from db.models.models_param import ModelCreateParam
@@ -24,7 +25,6 @@ class ModelService:
     def __init__(self,
                  model_dao: ModelsRepository):
         self.__mapper = model_dao
-
 
     @staticmethod
     def __invalid_create_param(model_name, group_uuid, user_uuid):

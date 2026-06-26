@@ -4,7 +4,7 @@ The SQL about table named 'model_type'
 Date: 2026-5-16
 Created by oldmerman
 """
-
+from enum import Enum
 from typing import List, Optional
 
 from psycopg2 import sql
@@ -18,6 +18,12 @@ from utils import get_logger
 
 
 logger = get_logger(__name__)
+
+class ModelTypeEnum(Enum):
+    FLASH = "快速响应模型"
+    REFLECT = "推理模型"
+    EMBEDDING = "向量模型"
+    RERANK = "重排序模型"
 
 
 class ModelTypeRepository:

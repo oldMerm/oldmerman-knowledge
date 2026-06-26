@@ -31,7 +31,7 @@ class ModelTypeService:
     def select_type_models(self, type_name: Optional[str]):
         if type_name is None:
             return None
-        models: List[ModelsWithTypeParam] = self.__mapper.select_type_models(type_name)
+        models = self.__mapper.select_type_models(type_name)
         return models
 
     def insert_type(self, model_type_name):

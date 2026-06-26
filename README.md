@@ -66,7 +66,11 @@ XX_API_KEY=用于调试Agent
 
 ## 大模型集成列表
 **chat**: DeepSeek
+
+
 **embedding**: BigModel(智谱)，Alibaba
+
+
 **rerank**: BigModel
 
 有优秀，廉价的模型也可以向老鱼人反馈~

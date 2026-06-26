@@ -12,12 +12,15 @@ class EMB_SUPPORT_ENUM(Enum):
     BIG_MODEL = 2
     ALIBABA = 3
 
+
 # 映射关系
+# 全路径匹配
 embedding_support: dict[str, EMB_SUPPORT_ENUM] = {
-    # 全路径匹配
     "https://api.openai.com/v1": EMB_SUPPORT_ENUM.CHAT_GPT,
     "https://open.bigmodel.cn/api/paas/v4": EMB_SUPPORT_ENUM.BIG_MODEL,
-    # 模糊匹配
+}
+# 模糊匹配
+fuzzy_embedding_support: dict[str, EMB_SUPPORT_ENUM] = {
     "maas.aliyuncs.com": EMB_SUPPORT_ENUM.ALIBABA
 }
 

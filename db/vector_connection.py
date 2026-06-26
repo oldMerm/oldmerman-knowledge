@@ -102,10 +102,11 @@ if __name__ == "__main__":
     e_input = ["鱼人博客V1.2.5版本讲了什么？"]
 
     # query demo
-    p_res = ChromaVectorHelper("small_text_collection").collection.get(
-        ids="e09b284b-d9bf-4404-887d-237479106d41"
-    )
-    print(p_res)
+    # p_res = ChromaVectorHelper("small_text_collection").collection.get(
+    #     ids="e09b284b-d9bf-4404-887d-237479106d41"
+    # )
+    # print(p_res)
+    ChromaVectorHelper.delete_collection("text_collection")
     # res = p_res.get("documents")
     #
     # m_documents = []

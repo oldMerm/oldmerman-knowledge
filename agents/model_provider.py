@@ -60,6 +60,24 @@ class ModelProvider:
 
 
 if __name__ == "__main__":
-    model = ModelProvider.get_model(1006)
-    res = model.invoke("牛逼 = 1，那2*牛逼=几？")
-    print(res)
+    from openai import OpenAI
+
+    param = ModelsRepository.as_dependency().select_model(1012)
+    client = OpenAI(
+        api_key=param.api_key,
+        base_url=param.base_url
+    )
+
+    response = client.chat.completions.create(
+        model="deepseek-v4-pro",  # 必须是 pro 版本
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant"},
+            {"role": "user", "content": "请描述这张图片的内容",
+             "image_url": "https://pic2.zhimg.com/v2-ada4f54f24990920bf4dc508d6d4bac9_1440w.jpg"},
+        ],
+        stream=False,
+        reasoning_effort="high",
+        extra_body={"thinking": {"type": "enabled"}}
+    )
+
+    print(response.choices[0].message.content)

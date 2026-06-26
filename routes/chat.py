@@ -34,13 +34,12 @@ async def chat(dto: OChatRequest, req: Request):
     if user_prompt is None or collection_name is None:
         return None
 
+    logger.info(f"用户: {client_ip} 请求， prompt: {user_prompt}")
     factory = AgentsFactory()
     param = factory.build_agent(AgentType.COMMON)
     documents = ChromaVectorHelper(collection_name=collection_name).query([user_prompt]).get("documents")
-    print(documents)
     # 重排序，根据系统配置判断，若不开启则会原样返回
     ranked_document = rerank(user_prompt, ListSeparator.convert_str_list(documents), client_ip)
-    print(ranked_document)
 
     # 构建系统提示词
     system_msg = f"{COMMON_PROMPT}, Use this context:\n{ranked_document}"

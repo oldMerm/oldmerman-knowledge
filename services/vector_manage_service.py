@@ -13,7 +13,7 @@ from fastapi.params import Depends
 
 from common import BusinessException
 from config import get_settings
-from db.dao import VectorCollectionRepository
+from db.dao import VectorCollectionRepository, DocumentsRepository
 from db.dao.tokens_usage_repository import TokensUsageRepository
 from db.models import VectorCollectionRenderParam
 from db.models.vector_manage_param import VectorCollectionUpdateParam
@@ -32,9 +32,11 @@ class VectorManageService:
 
     def __init__(self,
                  vector_dao: VectorCollectionRepository,
-                 tokens_usage_dao: TokensUsageRepository):
+                 tokens_usage_dao: TokensUsageRepository,
+                 document_dao: DocumentsRepository):
         self.__mapper = vector_dao
         self.__tokens_usage_mapper = tokens_usage_dao
+        self.__document_mapper = document_dao
 
     async def upload(self, user_id: str, collection_name: str, metadatas: dict[str, Any],
                      file: UploadFile, language: str) -> list[str]:
@@ -104,12 +106,12 @@ class VectorManageService:
                 metadatas=filter_metadatas,
                 doc_id=doc_id,
                 content_hashes=filter_content_hashes,
-                colletion_name=collection_name
+                collection_name=collection_name
             )
 
             # 入向量库
             helper = ChromaVectorHelper(collection_name=collection_name)
-            response = await helper.add(
+            response = helper.add(
                 ids=filter_ids,
                 documents=filter_documents,
                 metadatas=filter_metadatas
@@ -170,6 +172,7 @@ class VectorManageService:
 
     def remove_collection(self, collection_id: int):
         collection_name = self.__mapper.remove_collection(collection_id=collection_id)
+        self.__document_mapper.delete_by_collection_name(collection_name)
         ChromaVectorHelper.delete_collection(collection_name=collection_name)
         logger.info(f"remove collection:{collection_name} success")
 
@@ -179,8 +182,9 @@ class VectorManageService:
 def get_vector_manage_service(
         vector_dao: VectorCollectionRepository = Depends(),
         tokens_usage_dao: TokensUsageRepository = Depends(),
+        document_dao: DocumentsRepository = Depends()
 ) -> VectorManageService:
-    return VectorManageService(vector_dao, tokens_usage_dao)
+    return VectorManageService(vector_dao, tokens_usage_dao, document_dao)
 
 
 if __name__ == "__main__":

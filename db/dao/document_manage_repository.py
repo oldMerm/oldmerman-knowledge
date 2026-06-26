@@ -104,8 +104,35 @@ class DocumentsRepository:
                 logger.error(f"delete document failed, {e}")
                 raise e
 
+    def delete_by_collection_name(self, collection_name):
+        with get_db_connection() as conn:
+            try:
+                with conn.cursor() as cur:
+                    delete = sql.SQL("DELETE FROM {} WHERE collection_name = %s RETURNING id").format(
+                        sql.SQL(self.table)
+                    )
+                    cur.execute(delete, (collection_name,))
+                    rows = cur.fetchall()
+                    if not rows:
+                        return
 
+                    delete_detail_ids = [str(row[0]) for row in rows]
+                    placeholders = ','.join(['%s'] * len(delete_detail_ids))
+
+                    delete_detail = sql.SQL("""
+                                            DELETE
+                                            FROM {}
+                                            WHERE doc_id IN ({})
+                                                RETURNING id
+                                            """).format(
+                        sql.SQL(self.detail_table),
+                        sql.SQL(placeholders)
+                    )
+                    cur.execute(delete_detail, delete_detail_ids)
+
+            except Exception as e:
+                logger.error(f"delete document failed, {e}")
+                raise e
 
 if __name__ == "__main__":
-    res = DocumentsRepository().page(0, 5, collection_name="text_collection")
-    print(res)
+    pass

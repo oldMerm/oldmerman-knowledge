@@ -10,6 +10,7 @@ from fastapi import APIRouter
 from fastapi.params import Depends, Param
 
 from common import Result
+from db.dao import ModelTypeRepository
 from db.entities import ModelType
 from db.models.models_param import ModelsWithTypeParam
 from services import get_model_type_service
