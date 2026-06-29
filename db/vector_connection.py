@@ -71,7 +71,7 @@ class ChromaVectorHelper:
             metadatas: list[dict[str, Any]] = None) -> VectorCollectionCreateParam:
         update_param = self.embedding_param
         update_param.doc = documents
-        embeddings_with_metadata = get_embeddings_supported(update_param)  # 获取统一响应的数据
+        embeddings_with_metadata = get_embeddings_supported(update_param, False)  # 获取统一响应的数据
         # 记录嵌入向量的相关数据
         self.collection.add(
             ids=ids,

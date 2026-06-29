@@ -5,79 +5,41 @@ Date: 2026-6-24
 Created by oldmerman
 """
 import os
+from typing import Tuple, List, Dict
 
 from dotenv import load_dotenv
 from openai import OpenAI
 
-from agents.embedding.embedding_common import EmbeddingsGetterParam, EmbeddingsResponseParam, EmbeddingUtils
-from utils import ListSeparator
+from agents.embedding.embedding_base import BaseEmbeddingAdapter
+from agents.embedding.embedding_common import EmbeddingsGetterParam, EmbeddingUtils
 
 load_dotenv()
-
 
 def get_alibaba_embedding(api_key: str, base_url: str):
     return OpenAI(api_key=api_key, base_url=base_url).embeddings
 
 
-class AlibabaEmbedding:
+class AlibabaEmbedding(BaseEmbeddingAdapter):
 
-    @staticmethod
-    def embeddings(param: EmbeddingsGetterParam) -> EmbeddingsResponseParam:
-        embedding = get_alibaba_embedding(param.api_key, param.base_url)
-        origin_list = param.doc
+    def _get_client(self, param: EmbeddingsGetterParam):
+        return OpenAI(api_key=param.api_key, base_url=param.base_url).embeddings
 
-        all_embeddings = []
-        total_prompt_tokens = 0
-        total_completion_tokens = 0
-        total_tokens = 0
-        model_name = None
-
-        BATCH_SIZE = 10
-        if len(origin_list) <= BATCH_SIZE:
-            # 单次处理
-            pre_response = embedding.create(
-                input=param.doc,
-                model=param.model_name if param.model_name is not None else "text-embedding-v4",
-                dimensions=param.dimensions
-            )
-            response = EmbeddingUtils.dict_to_request_obj(pre_response.model_dump_json())
-            all_embeddings = [emb.embedding for emb in response.data]
-            model_name = response.model
-            total_prompt_tokens = response.usage.prompt_tokens
-            total_completion_tokens = response.usage.completion_tokens
-            total_tokens = response.usage.total_tokens
-        else:
-            # 分批处理
-            batches = ListSeparator.chunk_array(origin_list, BATCH_SIZE)
-
-            for batch in batches:
-                pre_response = embedding.create(
-                    input=batch,
-                    model=param.model_name if param.model_name is not None else "text-embedding-v4",
-                    dimensions=param.dimensions
-                )
-                response = EmbeddingUtils.dict_to_request_obj(pre_response.model_dump_json())
-                # 收集 embedding 数据
-                all_embeddings.extend([emb.embedding for emb in response.data])
-
-                # 累加 token 使用量
-                total_prompt_tokens += response.usage.prompt_tokens
-                total_completion_tokens += response.usage.completion_tokens
-                total_tokens += response.usage.total_tokens
-
-                # 记录模型名称（所有批次应该相同）
-                if model_name is None:
-                    model_name = response.model
-
-        return EmbeddingsResponseParam(
-            model_name=model_name,
-            data=all_embeddings,
-            tokens={
-                "prompt_tokens": total_prompt_tokens,
-                "completion_tokens": total_completion_tokens,
-                "total_tokens": total_tokens
-            }
+    def _send_request(self, client, batch: List[str], param: EmbeddingsGetterParam):
+        return client.create(
+            input=param.doc,
+            model=param.model_name if param.model_name is not None else "text-embedding-v4",
+            dimensions=param.dimensions
         )
+
+    def _parse_response(self, response) -> Tuple[List[List[float]], Dict[str, int], str]:
+        pre_response = EmbeddingUtils.dict_to_request_obj(response.model_dump_json())
+        embeddings = [emb.embedding for emb in pre_response.data]
+        usage = pre_response.usage
+        model_name = pre_response.model
+        return embeddings, usage.to_dict(), model_name
+
+    def _get_batch_size(self) -> int:
+        return 10
 
 if __name__ == "__main__":
     # {"data": [

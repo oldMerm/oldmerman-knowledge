@@ -5,13 +5,12 @@ BigModel(智谱清言): https://docs.bigmodel.cn/cn/guide/start/model-overview#%
 
 Created by oldmerman
 """
-from .embedding_provider import get_embeddings_supported
+from .embedding_provider import get_embeddings_supported, EmbeddingFactory
 from .zhi_pu_embedding import ZhiPuEmbedding
-from .embedding_common import EMB_SUPPORT_ENUM, embedding_support, EmbeddingsGetterParam, EmbeddingsResponseParam, \
-    EmbeddingUtils
+from .embedding_common import EmbeddingsGetterParam, EmbeddingsResponseParam, EmbeddingUtils
 
 __all__ = [
-    "get_embeddings_supported",
+    "get_embeddings_supported", "EmbeddingFactory",
     "ZhiPuEmbedding",
-    "EmbeddingsGetterParam", "embedding_support", "EMB_SUPPORT_ENUM", "EmbeddingsResponseParam", "EmbeddingUtils"
+    "EmbeddingsGetterParam", "EmbeddingsResponseParam", "EmbeddingUtils"
 ]

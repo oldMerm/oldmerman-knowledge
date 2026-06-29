@@ -5,26 +5,6 @@ from typing import Optional, Any, List
 
 from pydantic import BaseModel, Field
 
-
-# 支持的模型枚举
-class EMB_SUPPORT_ENUM(Enum):
-    CHAT_GPT = 1
-    BIG_MODEL = 2
-    ALIBABA = 3
-
-
-# 映射关系
-# 全路径匹配
-embedding_support: dict[str, EMB_SUPPORT_ENUM] = {
-    "https://api.openai.com/v1": EMB_SUPPORT_ENUM.CHAT_GPT,
-    "https://open.bigmodel.cn/api/paas/v4": EMB_SUPPORT_ENUM.BIG_MODEL,
-}
-# 模糊匹配
-fuzzy_embedding_support: dict[str, EMB_SUPPORT_ENUM] = {
-    "maas.aliyuncs.com": EMB_SUPPORT_ENUM.ALIBABA
-}
-
-
 # 嵌入模型提供商参数
 class EmbeddingsProviderCommonParam(BaseModel):
     model_name: str = Field(description="模型名称")
@@ -46,8 +26,10 @@ class EmbeddingsGetterParam(BaseModel):
 class EmbeddingsResponseParam(BaseModel):
     model_name: str = Field(description="模型名称")
     data: List[Any] = Field(description="向量化的结果")
-    tokens: dict[str, int] = Field(description="token消耗记录")
+    tokens: dict[str, int] = Field(description="token消耗记录", default={})
     time: datetime = Field(default=datetime.now(), description="时间")
+    failed_batches: List[str] = Field(description="上传失败的索引", default=[])
+    failed_details: List[str] = Field(description="上传失败的细节", default=[])
 
 
 # 向量模型返回的统一格式
@@ -61,6 +43,13 @@ class CommonUsage(BaseModel):
     prompt_tokens: int
     completion_tokens: int
     total_tokens: int
+
+    def to_dict(self):
+        return {
+            "prompt_tokens": self.prompt_tokens,
+            "completion_tokens": self.completion_tokens,
+            "total_tokens": self.total_tokens
+        }
 
 
 class CommonEmbeddingsResponded(BaseModel):

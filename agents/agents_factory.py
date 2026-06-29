@@ -17,7 +17,7 @@ class AgentType:
     DIGEST = "article"  # 别名
 
 
-# 工厂字典
+# 注册表
 PROCESSOR_FACTORY: Dict[str, Callable[[Optional[int]], AgentParam]] = {
     AgentType.COMMON: get_common_agent,
     AgentType.ARTICLE: get_digest_agent,
