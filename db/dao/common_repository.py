@@ -5,10 +5,9 @@ Date: 2026-4-28
 Created by oldmerman
 """
 
-from psycopg2 import sql
+from psycopg import sql
 
 from db.connection import get_db_connection
-
 
 
 def check_value_exists(table: str, field: str, value):

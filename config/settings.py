@@ -24,7 +24,8 @@ class Settings(BaseSettings):
     PORT: int = Field(default=8000, alias="PORT")
 
     # database
-    MAX_DATABASE_POOL_SIZE: int = Field(default=10, alias="DATABASE_POOL_SIZE")
+    MAX_DATABASE_POOL_SIZE: int = Field(default=5, alias="DATABASE_POOL_SIZE")
+    MAX_LANGGRAPH_CHECKPOINTER_POOL_SIZE: int = Field(default=3, alias="CHECKPOINTER_POOL_SIZE")
 
     # chromadb
     VECTOR_PERSIST_URL: str = Field(default=r"D:\chromadb", alias="VECTOR_PERSIST_URL")

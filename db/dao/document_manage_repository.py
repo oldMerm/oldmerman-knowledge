@@ -4,7 +4,7 @@
 Date: 2026-6-9
 Created by oldmerman
 """
-from psycopg2 import sql
+from psycopg import sql
 
 from db.connection import get_db_connection
 from db.dao import VectorCollectionRepository
@@ -70,7 +70,7 @@ class DocumentsRepository:
                 rows = cur.fetchall()
                 return [
                     DocumentPageParam(
-                        id=row[0],
+                        id=str(row[0]),
                         filename=row[1],
                         filesize=row[2],
                         collection_name=row[3],
@@ -86,16 +86,16 @@ class DocumentsRepository:
             try:
                 with conn.cursor() as cur:
                     delete = sql.SQL("DELETE FROM {} WHERE id = %s RETURNING collection_name").format(
-                        sql.SQL(self.table)
+                        sql.Identifier(self.table)
                     )
                     cur.execute(delete, (doc_id,))
                     collection_name = cur.fetchone()[0]
                     delete_detail = sql.SQL("DELETE FROM {} WHERE doc_id = %s RETURNING id").format(
-                        sql.SQL(self.detail_table)
+                        sql.Identifier(self.detail_table)
                     )
                     cur.execute(delete_detail, (doc_id,))
                     rows = cur.fetchall()
-                    delete_detail_ids = [row[0] for row in rows]
+                    delete_detail_ids = [str(row[0]) for row in rows]
                     VectorCollectionRepository().update_collection(collection_name=collection_name,
                                                                    number_update=-len(delete_detail_ids))
                     ChromaVectorHelper(collection_name).delete(delete_detail_ids)
@@ -109,7 +109,7 @@ class DocumentsRepository:
             try:
                 with conn.cursor() as cur:
                     delete = sql.SQL("DELETE FROM {} WHERE collection_name = %s RETURNING id").format(
-                        sql.SQL(self.table)
+                        sql.Identifier(self.table)
                     )
                     cur.execute(delete, (collection_name,))
                     rows = cur.fetchall()
@@ -125,8 +125,8 @@ class DocumentsRepository:
                                             WHERE doc_id IN ({})
                                                 RETURNING id
                                             """).format(
-                        sql.SQL(self.detail_table),
-                        sql.SQL(placeholders)
+                        sql.Identifier(self.detail_table),
+                        sql.Identifier(placeholders)
                     )
                     cur.execute(delete_detail, delete_detail_ids)
 

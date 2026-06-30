@@ -88,13 +88,13 @@ class ChromaVectorHelper:
     def delete(self, ids: list[str]):
         self.collection.delete(ids=ids)
 
-    def query(self, messages: list[str],number: int = Settings.EMBEDDING_RESULT_N):
+    def query(self, messages: list[str],n_result: int = Settings.EMBEDDING_RESULT_N):
         query_param = self.embedding_param
         query_param.doc = messages
         res_param = get_embeddings_supported(query_param)
         return self.collection.query(
             query_embeddings=res_param.data,
-            n_results=number
+            n_results=n_result
         )
 
 

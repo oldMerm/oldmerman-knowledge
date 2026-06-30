@@ -1,8 +1,7 @@
 import os
 from contextlib import contextmanager
 
-import psycopg2
-from psycopg2 import pool
+from psycopg_pool import ConnectionPool
 from dotenv import load_dotenv
 
 from config import get_settings
@@ -19,11 +18,17 @@ settings = get_settings()
 def init_db():
     global _connection_pool
 
-    _connection_pool = psycopg2.pool.SimpleConnectionPool(
-        minconn=1,
-        maxconn=settings.MAX_DATABASE_POOL_SIZE,
-        dsn=DATABASE_URL
+    _connection_pool = ConnectionPool(
+        conninfo=DATABASE_URL,
+        min_size=1,
+        max_size=settings.MAX_DATABASE_POOL_SIZE,
+        open=True,
     )
+
+
+def close_db():
+    if _connection_pool:
+        _connection_pool.close()
 
 
 def get_connection():
@@ -41,14 +46,9 @@ def close_connection(conn):
 
 @contextmanager
 def get_db_connection():
-    """从连接池获取连接，自动管理事务"""
+    """从连接池获取连接，自动管理事务（成功自动commit，异常自动rollback）"""
     global _connection_pool
-    conn = get_connection()
-    try:
+    if _connection_pool is None:
+        init_db()
+    with _connection_pool.connection() as conn:
         yield conn
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
-        raise e  # 重新抛出原始异常，让调用方处理
-    finally:
-        close_connection(conn)

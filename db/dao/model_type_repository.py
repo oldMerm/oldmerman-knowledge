@@ -7,7 +7,7 @@ Created by oldmerman
 from enum import Enum
 from typing import List, Optional
 
-from psycopg2 import sql
+from psycopg import sql
 
 from db.connection import get_db_connection
 from db.dao.common_repository import check_value_exists
@@ -43,9 +43,9 @@ class ModelTypeRepository:
 
         with get_db_connection() as conn:
             with conn.cursor() as cur:
-                query = sql.SQL("INSERT INTO {} (model_type_name) "
-                                "VALUES (%s) "
-                                "RETURNING id").format(
+                query = sql.SQL("""INSERT INTO {} (model_type_name)
+                                   VALUES (%s)
+                                       RETURNING id""").format(
                     sql.Identifier(self.table)
                 )
                 cur.execute(query, (model_type_name,))
@@ -102,9 +102,9 @@ class ModelTypeRepository:
                     return None
                 type_id = row[0]
 
-                query = sql.SQL("SELECT m.id, m.model_name FROM models m "
-                                "INNER JOIN {} mtl ON m.id = mtl.model_id "
-                                "WHERE mtl.type_id = %s ").format(
+                query = sql.SQL("""SELECT m.id, m.model_name FROM models m 
+                                INNER JOIN {} mtl ON m.id = mtl.model_id 
+                                WHERE mtl.type_id = %s """).format(
                     sql.Identifier(self.link_table)
                 )
                 cur.execute(query, (type_id,))

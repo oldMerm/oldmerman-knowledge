@@ -6,7 +6,7 @@ Created by oldmerman
 """
 from typing import List
 
-from psycopg2 import sql
+from psycopg import sql
 
 from db.connection import get_db_connection
 from db.dao.common_repository import check_value_exists

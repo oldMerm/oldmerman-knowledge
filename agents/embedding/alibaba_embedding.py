@@ -55,11 +55,11 @@ if __name__ == "__main__":
     #  "model": "text-embedding-v4", "object": "list", "usage": {"prompt_tokens": 11, "total_tokens": 11},
     #  "id": "d2538ad0-30dd-9fcf-bcbd-06bbbce70d06"}
 
-    client = get_alibaba_embedding(os.getenv("ALIBABA_API_KEY"),
+    o_client = get_alibaba_embedding(os.getenv("ALIBABA_API_KEY"),
                                    f"https://{os.getenv("ALIBABA_WORKSPACE_ID")}.cn-beijing.maas.aliyuncs.com/compatible-mode/v1")
 
     input_text = "老鱼人是一个热爱编程的计算机专业大学生"
-    completion = client.create(
+    completion = o_client.create(
         model="text-embedding-v4",
         input=input_text
     )

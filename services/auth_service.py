@@ -11,7 +11,7 @@ import bcrypt
 from datetime import datetime, timezone
 from typing import Optional
 
-from db.connection import get_connection, close_connection
+from db.connection import get_db_connection
 from db.entities.user import User, UserStatus
 from utils.jwt import create_token
 from utils.logger import get_logger
@@ -30,8 +30,7 @@ class AuthService:
         return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
 
     def _get_user_by_username(self, username: str) -> Optional[User]:
-        conn = get_connection()
-        try:
+        with get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     "SELECT id, user_uuid, username, email, phone, password_hash, status, "
@@ -53,20 +52,14 @@ class AuthService:
                     updated_at=row[8],
                     last_login_at=row[9],
                 )
-        finally:
-            close_connection(conn)
 
     def _update_last_login(self, user_id: int, ip_address: Optional[str]) -> None:
-        conn = get_connection()
-        try:
+        with get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     "UPDATE users SET last_login_at = %s, last_login_ip = %s WHERE id = %s",
                     (datetime.now(timezone.utc), ip_address, user_id)
                 )
-                conn.commit()
-        finally:
-            close_connection(conn)
 
     def register(
         self,
@@ -76,8 +69,7 @@ class AuthService:
         phone: Optional[str] = None,
         ip_address: Optional[str] = None,
     ) -> User:
-        conn = get_connection()
-        try:
+        with get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     "SELECT id FROM users WHERE username = %s OR (email = %s AND %s IS NOT NULL) "
@@ -97,7 +89,6 @@ class AuthService:
                     (user_uuid, username, email, phone, password_hash, ip_address, UserStatus.ACTIVE)
                 )
                 row = cur.fetchone()
-                conn.commit()
 
                 user = User(
                     id=row[0],
@@ -113,12 +104,6 @@ class AuthService:
                 )
                 logger.info(f"User registered: {username}")
                 return user
-        except Exception as e:
-            conn.rollback()
-            logger.error(f"Registration failed: {e}")
-            raise
-        finally:
-            close_connection(conn)
 
     def login(self, username: str, password: str, ip_address: Optional[str] = None) -> str:
         user = self._get_user_by_username(username)
@@ -132,7 +117,7 @@ class AuthService:
             raise ValueError("Invalid username or password")
 
         self._update_last_login(user.id, ip_address)
-        token = create_token(user.user_uuid, username)
+        token = create_token(str(user.user_uuid), username)
         logger.info(f"User logged in: {username}")
         return token
 

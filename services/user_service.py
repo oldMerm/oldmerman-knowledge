@@ -1,6 +1,6 @@
 from typing import Optional
 
-from db.connection import get_connection, close_connection
+from db.connection import get_db_connection
 from db.entities.user import User, UserStatus
 from utils.logger import get_logger
 
@@ -16,8 +16,7 @@ class UserService:
         return "*" * (len(phone) - 4) + phone[-4:]
 
     def get_user_by_uuid(self, user_uuid: str) -> Optional[User]:
-        conn = get_connection()
-        try:
+        with get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     "SELECT id, user_uuid, username, email, phone, status, "
@@ -37,25 +36,15 @@ class UserService:
                     created_at=row[6],
                     updated_at=row[7],
                 )
-        finally:
-            close_connection(conn)
 
     def update_username(self, user_uuid: str, new_username: str) -> bool:
-        conn = get_connection()
-        try:
+        with get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     "UPDATE users SET username = %s, updated_at = NOW() WHERE user_uuid = %s",
                     (new_username, user_uuid)
                 )
-                conn.commit()
                 return cur.rowcount > 0
-        except Exception as e:
-            conn.rollback()
-            logger.error(f"Update username failed: {e}")
-            raise
-        finally:
-            close_connection(conn)
 
 
 def get_user_service() -> UserService:

@@ -57,7 +57,7 @@ python main.py
 
 ## Dependencies
 
-- FastAPI, Pydantic, psycopg2-binary (PostgreSQL), python-dotenv, JWT, bcrypt, LangChain, LangGraph
+- FastAPI, Pydantic, psycopg (PostgreSQL), psycopg_pool, python-dotenv, JWT, bcrypt, LangChain, LangGraph
 
 ## Notes
 

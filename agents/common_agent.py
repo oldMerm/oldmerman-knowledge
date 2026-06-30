@@ -4,6 +4,7 @@ from langchain.agents import create_agent
 from agents.model_provider import ModelProvider
 from agents.tool import save_token_usage_to_db
 from agents.types import CommonContext, AgentParam
+from db.langgraph_checkpointer import get_checkpointer
 
 
 @lru_cache(maxsize=10)
@@ -16,6 +17,8 @@ def get_common_agent(model_id: int = None) -> AgentParam:
             model_name=ModelProvider.DEFAULT_MODEL_NAME
         )
 
+    # 初始化检查点
+    get_checkpointer()
     return AgentParam(
         agent=create_agent(
             model=model.model,

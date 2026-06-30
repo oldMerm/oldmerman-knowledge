@@ -4,7 +4,7 @@ The SQL about table named 'tokens_usage'
 Date: 2026-6-3
 Created by oldmerman
 """
-from psycopg2 import sql
+from psycopg import sql
 
 from db.connection import get_db_connection
 from db.models import DateWithSumParam, TokensUsageCountParam

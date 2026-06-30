@@ -140,7 +140,6 @@ class BaseEmbeddingAdapter(ABC):
         """
         pass
 
-    # ========== 钩子方法（子类可重写） ==========
     def _get_batch_size(self) -> int:
         """默认批次大小，子类可重写"""
         return 50

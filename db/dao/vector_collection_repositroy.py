@@ -9,9 +9,7 @@ import hashlib
 import json
 from typing import List, Optional, Any
 
-from psycopg2.extras import execute_values
-
-from psycopg2 import sql
+from psycopg import sql
 
 from common import BusinessException
 from db.connection import get_db_connection
@@ -96,13 +94,14 @@ class VectorCollectionRepository:
                         doc_id,
                         collection_name
                     ))
-                # 批量插入
-                execute_values(cur, f"""
-                    INSERT INTO {self.metadata_table} 
+                query = sql.SQL("""
+                    INSERT INTO {}
                     (id, content_hash, metadata, doc_id, collection_name)
-                    VALUES %s
-                """, insert_data)
-                conn.commit()
+                    VALUES (%s,%s,%s,%s,%s)
+                """).format(
+                    sql.Identifier(self.metadata_table)
+                )
+                cur.executemany(query, insert_data)
 
     def remove_embeddings_record(self, doc_id):
         with get_db_connection() as conn:
@@ -121,9 +120,9 @@ class VectorCollectionRepository:
     def select_by_id(self, collection_id: int) -> Optional[VectorCollection]:
         with get_db_connection() as conn:
             with conn.cursor() as cur:
-                query = sql.SQL("SELECT id, embedding_id, collection_name, collection_alias, "
-                                "collection_description, items_number, created_at "
-                                "FROM {} WHERE id = %s").format(
+                query = sql.SQL("""SELECT id, embedding_id, collection_name, collection_alias, 
+                                collection_description, items_number, created_at
+                                FROM {} WHERE id = %s""").format(
                     sql.Identifier(self.table)
                 )
                 cur.execute(query, (collection_id,))
@@ -146,9 +145,17 @@ class VectorCollectionRepository:
     def select_by_embedding(self, embedding_id: int) -> List[VectorCollection]:
         with get_db_connection() as conn:
             with conn.cursor() as cur:
-                query = sql.SQL("SELECT id, embedding_id, collection_name, collection_alias, "
-                                "collection_description, items_number, created_at , dimensions "
-                                "FROM {} WHERE embedding_id = %s ORDER BY id").format(
+                query = sql.SQL("""SELECT id,
+                                          embedding_id,
+                                          collection_name,
+                                          collection_alias,
+                                          collection_description,
+                                          items_number,
+                                          created_at,
+                                          dimensions
+                                   FROM {}
+                                   WHERE embedding_id = %s
+                                   ORDER BY id""").format(
                     sql.Identifier(self.table)
                 )
                 cur.execute(query, (embedding_id,))
@@ -219,10 +226,10 @@ class VectorCollectionRepository:
 
         with get_db_connection() as conn:
             with conn.cursor() as cur:
-                query = sql.SQL("INSERT INTO {} (embedding_id, collection_name, collection_alias, "
-                                "collection_description, items_number, dimensions) "
-                                "VALUES (%s, %s, %s, %s, %s, %s) "
-                                "RETURNING id").format(
+                query = sql.SQL("""INSERT INTO {} (embedding_id, collection_name, collection_alias,
+                                                   collection_description, items_number, dimensions)
+                                   VALUES (%s, %s, %s, %s, %s, %s)
+                                       RETURNING id""").format(
                     sql.Identifier(self.table)
                 )
                 cur.execute(query, (embedding_id, collection_name, collection_alias,

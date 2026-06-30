@@ -45,7 +45,7 @@ async def chat(dto: OChatRequest, req: Request):
     system_msg = f"{COMMON_PROMPT}, Use this context:\n{ranked_document}"
 
     async def generate_response():
-        for chunk in param.agent.stream(
+        async for chunk in param.agent.astream(
                 {"messages": [
                     {"role": "system", "content": system_msg},
                     {"role": "user", "content": user_prompt}

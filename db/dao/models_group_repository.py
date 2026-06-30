@@ -7,7 +7,7 @@ Created by oldmerman
 
 from typing import List, Optional
 
-from psycopg2 import sql
+from psycopg import sql
 from db.connection import get_db_connection
 from db.dao.models_repository import ModelsRepository
 from db.entities import ModelsGroup
@@ -38,7 +38,7 @@ class ModelsGroupRepository:
                 rows = cur.fetchall()
                 return [
                     ModelsGroupRender(
-                        group_uuid=row[0],
+                        group_uuid=str(row[0]),
                         group_name=row[1],
                         group_attr=row[2]
                     )
@@ -62,7 +62,7 @@ class ModelsGroupRepository:
                 row = cur.fetchone()
                 return ModelsGroup(
                     id=row[0],
-                    group_uuid=row[1],
+                    group_uuid=str(row[1]),
                     group_name=row[2],
                     group_attr=row[3],
                     created_at=row[4],
@@ -84,7 +84,7 @@ class ModelsGroupRepository:
                     logger.warning(f"{group_name} create failed")
                     raise ValueError(f"{group_name} create failed")
 
-                group_uuid = row[0]
+                group_uuid = str(row[0])
                 logger.info(f"Model:{group_uuid} named {group_name} successfully added")
 
                 return group_uuid
