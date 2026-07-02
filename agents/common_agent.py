@@ -18,14 +18,15 @@ def get_common_agent(model_id: int = None) -> AgentParam:
         )
 
     # 初始化检查点
-    get_checkpointer()
+    checkpointer = get_checkpointer()
     return AgentParam(
         agent=create_agent(
             model=model.model,
             context_schema=CommonContext,
             middleware=[
                 save_token_usage_to_db
-            ]
+            ],
+            checkpointer=checkpointer
         ),
         model_id=model.model_id,
         model_name=model.model_name,

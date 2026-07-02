@@ -4,6 +4,7 @@
 Date: 2026-6-18
 Created by oldmerman
 """
+import datetime
 import json
 
 from fastapi import APIRouter, Request
@@ -24,34 +25,37 @@ router = APIRouter(prefix="/chat", tags=["agent"])
 class OChatRequest(BaseModel):
     user_prompt: str = Field(description="请求的内容")
     collection_name: str = Field(description="选择的知识库名称")
+    sign: str = Field(description="请求标识，随机的六位字符串")
 
 
 @router.post("")
 async def chat(dto: OChatRequest, req: Request):
     user_prompt = dto.user_prompt
     collection_name = dto.collection_name
-    client_ip = req.client.host # 记录调用者ip地址
+    client_ip = req.client.host  # 记录调用者ip地址
     if user_prompt is None or collection_name is None:
         return None
 
     logger.info(f"用户: {client_ip} 请求， prompt: {user_prompt}")
     factory = AgentsFactory()
     param = factory.build_agent(AgentType.COMMON)
-    documents = ChromaVectorHelper(collection_name=collection_name).query([user_prompt]).get("documents")
+    documents = ChromaVectorHelper(collection_name=collection_name).query(client_ip, [user_prompt]).get("documents")
     # 重排序，根据系统配置判断，若不开启则会原样返回
     ranked_document = rerank(user_prompt, ListSeparator.convert_str_list(documents), client_ip)
 
     # 构建系统提示词
     system_msg = f"{COMMON_PROMPT}, Use this context:\n{ranked_document}"
+    # sign生成于前端(前端可重新生成使线程id过期)，后端拼接时间戳实现自动过期(1h)
+    thread_id = f"{client_ip}-{dto.sign}-{datetime.datetime.now().strftime('%Y%m%d%H')}"
 
     async def generate_response():
-        async for chunk in param.agent.astream(
+        for chunk in param.agent.stream(
                 {"messages": [
                     {"role": "system", "content": system_msg},
                     {"role": "user", "content": user_prompt}
                 ]},
-                context=CommonContext(user_id=client_ip, model_id=param.model_id,
-                                          model_name=param.model_name),
+                {"configurable": {"thread_id": thread_id}},
+                context=CommonContext(user_id=client_ip, model_id=param.model_id, model_name=param.model_name),
                 version="v2",
                 stream_mode="messages"
         ):

@@ -114,7 +114,8 @@ class VectorManageService:
             response = helper.add(
                 ids=filter_ids,
                 documents=filter_documents,
-                metadatas=filter_metadatas
+                metadatas=filter_metadatas,
+                user_id=user_id
             )
         except ValueError as e:
             self.__mapper.remove_embeddings_record(doc_id)
@@ -124,8 +125,6 @@ class VectorManageService:
 
         # 记录文档增量
         self.__mapper.update_collection(collection_name=collection_name, number_update=len(filter_ids))
-        # 记录token消耗量
-        self.__tokens_usage_mapper.add(user_id, response.model_id, response.tokens)
         return response.ids
 
     def get_render_list(self) -> List[VectorCollectionRenderParam]:

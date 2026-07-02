@@ -16,7 +16,6 @@ import PyPDF2
 from config import get_settings
 
 
-
 settings = get_settings()
 
 def extract_text_from_docx(file_bytes: bytes) -> str:

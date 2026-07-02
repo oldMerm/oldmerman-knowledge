@@ -1,5 +1,5 @@
 """Description
-涉及语言相关的内容
+符号优先级，用于按语意切分文档场景
 
 Date: 2026-5-24
 Created by oldmerman

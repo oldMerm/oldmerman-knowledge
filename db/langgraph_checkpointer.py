@@ -1,66 +1,61 @@
-"""Description
-LangGraph统一checkpoint
-
-Date: 2026-6-30
-Created by oldmerman
-"""
 import os
 
-from psycopg_pool import ConnectionPool
 from langgraph.checkpoint.postgres import PostgresSaver
-import psycopg
+from psycopg.rows import dict_row
+from dotenv import load_dotenv
+from psycopg_pool import ConnectionPool
 
 from config import get_settings
 
-_langgraph_pool = None
-_checkpointer = None
-_initialized = False
+load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "")
-
 settings = get_settings()
 
-def init_langgraph_db(lazy: bool = True):
-    """初始化 LangGraph 连接池"""
-    global _langgraph_pool, _initialized
-    if _initialized:
-        return
+# 全局连接池（应用启动时创建一次）
+_pool = None
+_checkpointer = None
 
-    _langgraph_pool = ConnectionPool(
-        DATABASE_URL,
+
+def init_checkpointer():
+    """初始化全局连接池和 checkpointer（应用启动时调用）"""
+    global _pool, _checkpointer
+
+    if _pool is not None:
+        return _checkpointer
+
+    import psycopg
+    conn = psycopg.connect(DATABASE_URL + "?sslmode=disable")
+    conn.execute("CREATE SCHEMA IF NOT EXISTS langchain")
+    conn.close()
+
+    _pool = ConnectionPool(
+        conninfo=DATABASE_URL + "?sslmode=disable",
         min_size=1,
         max_size=settings.MAX_LANGGRAPH_CHECKPOINTER_POOL_SIZE,
-        open=not lazy,
         kwargs={
             "autocommit": True,
-            "row_factory": psycopg.rows.dict_row
+            "row_factory": dict_row,
+            "options": "-c search_path=langchain"
         }
     )
-    _initialized = True
 
+    # 创建 checkpointer
+    _checkpointer = PostgresSaver(conn=_pool)
+    _checkpointer.setup()
 
-def ensure_initialized():
-    """确保已初始化，未初始化则自动初始化"""
-    global _initialized, _langgraph_pool
-    if not _initialized:
-        init_langgraph_db(lazy=True)
-
-    # 确保连接池已打开
-    if _langgraph_pool is not None and not _langgraph_pool.is_open:
-        _langgraph_pool.open()
+    return _checkpointer
 
 
 def get_checkpointer():
-    """获取 checkpointer"""
-    global _checkpointer
-    ensure_initialized()
-
     if _checkpointer is None:
-        conn = _langgraph_pool.getconn()
-        _checkpointer = PostgresSaver(
-            conn,
-            None,
-            {"schema": "langchain"}
-        )
-        _checkpointer.setup()
+        init_checkpointer()
     return _checkpointer
+
+
+def close_checkpointer():
+    global _pool, _checkpointer
+    if _pool:
+        _pool.close()
+        _pool = None
+        _checkpointer = None

@@ -53,10 +53,11 @@ class ChromaVectorHelper:
         get_vector_database().delete_collection(collection_name)
 
     def __init__(self, collection_name):
-        from db.dao import ModelsRepository
+        from db.dao import ModelsRepository, TokensUsageRepository
         self.client = get_vector_database()
         self.collection = self.client.get_or_create_collection(collection_name)
         self.embedding_id = self.collection.metadata.get("embedding_id")
+        self.token_usage_dao = TokensUsageRepository()
         model_param = ModelsRepository().select_model(self.embedding_id)
         self.embedding_param = EmbeddingsGetterParam(
             api_key=model_param.api_key,
@@ -66,7 +67,8 @@ class ChromaVectorHelper:
             doc=[]
         )
 
-    def add(self, ids: list[str] = None,
+    def add(self, user_id: str,
+            ids: list[str] = None,
             documents: list[Any] = None,
             metadatas: list[dict[str, Any]] = None) -> VectorCollectionCreateParam:
         update_param = self.embedding_param
@@ -80,18 +82,19 @@ class ChromaVectorHelper:
             metadatas=metadatas,
         )
 
+        self.token_usage_dao.add(user_id, self.embedding_id, embeddings_with_metadata.tokens)
         return VectorCollectionCreateParam(
             model_id=self.embedding_id,
-            tokens=embeddings_with_metadata.tokens
         )
 
     def delete(self, ids: list[str]):
         self.collection.delete(ids=ids)
 
-    def query(self, messages: list[str],n_result: int = Settings.EMBEDDING_RESULT_N):
+    def query(self, user_id: str, messages: list[str],n_result: int = Settings.EMBEDDING_RESULT_N):
         query_param = self.embedding_param
         query_param.doc = messages
         res_param = get_embeddings_supported(query_param)
+        self.token_usage_dao.add(user_id, self.embedding_id, res_param.tokens)
         return self.collection.query(
             query_embeddings=res_param.data,
             n_results=n_result

@@ -24,8 +24,8 @@ class TokensUsageRepository:
     def add(self, user_id: str, model_id: int, tokens: dict[str, int]):
         with get_db_connection() as conn:
             with conn.cursor() as cur:
-                query = sql.SQL("INSERT INTO {} (user_id, model_id, prompt_tokens, completion_tokens, total_tokens)"
-                                "VALUES (%s, %s, %s, %s, %s)").format(
+                query = sql.SQL("""INSERT INTO {} (user_id, model_id, prompt_tokens, completion_tokens, total_tokens)
+                                   VALUES (%s, %s, %s, %s, %s)""").format(
                     sql.Identifier(self.table)
                 )
 
