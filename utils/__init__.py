@@ -7,6 +7,7 @@ from .language import language_separators
 from .file_processor import extract_text, split_to_chunks
 from .list_separator import ListSeparator
 from .system_config import get_config_client
+from .http_client import AsyncHTTPClient, get_http_client
 
 __all__ = ["get_logger",
            "generate_thread_id",
@@ -16,4 +17,5 @@ __all__ = ["get_logger",
            "language_separators",
            "extract_text", "split_to_chunks",
            "ListSeparator",
-           "get_config_client"]
+           "get_config_client",
+           "AsyncHTTPClient", "get_http_client"]

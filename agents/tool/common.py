@@ -4,14 +4,36 @@
 Date: 2026-6-8
 Created by oldmerman
 """
+from typing import Any
+
 from langchain.agents import AgentState
-from langchain.agents.middleware import after_model
+from langchain.agents.middleware import after_model, before_model
+from langchain_core.messages import trim_messages
+from langchain_core.messages.utils import count_tokens_approximately
 from langgraph.prebuilt import ToolRuntime
 
 from agents.types import CommonContext
 from db.dao.tokens_usage_repository import TokensUsageRepository
 
-# TODO 可能有多个AIMessage产生token消耗，但只记录了lastMessage...
+@before_model
+def trim_chat_messages(
+        state: AgentState,
+        runtime: ToolRuntime[CommonContext]
+) -> dict[str, Any]:
+    """ 修剪历史消息 """
+    messages = state.get("messages", [])
+
+    trimmed_messages = trim_messages(
+        messages,
+        strategy="last",
+        token_counter=count_tokens_approximately,
+        max_tokens=4000,
+        start_on="human",
+        end_on=("human", "tool"),
+        include_system=True
+    )
+
+    return {"messages": trimmed_messages}
 
 @after_model
 def save_token_usage_to_db(

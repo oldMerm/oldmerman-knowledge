@@ -8,6 +8,7 @@ from .vector_manage import router as vector_manage_router
 from .api import router as api_simple_agent_router
 from .document_manage import router as document_router
 from .chat import router as chat_router
+from .system_config import router as system_config_router
 
 __all__ = ["login_router",
            "user_router",
@@ -16,4 +17,5 @@ __all__ = ["login_router",
            "vector_manage_router",
            "api_simple_agent_router",
            "document_router",
-           "chat_router"]
+           "chat_router",
+           "system_config_router"]

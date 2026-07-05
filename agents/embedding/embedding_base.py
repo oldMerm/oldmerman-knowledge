@@ -32,7 +32,12 @@ class BaseEmbeddingAdapter(ABC):
         embeddings, usage, model = self._parse_response(response)
         return EmbeddingsResponseParam(
             model_name=model,
-            data=embeddings
+            data=embeddings,
+            tokens={
+                "prompt_tokens": usage.get("prompt_tokens", 0),
+                "completion_tokens": usage.get("completion_tokens", 0),
+                "total_tokens": usage.get("total_tokens", 0)
+            }
         )
 
 

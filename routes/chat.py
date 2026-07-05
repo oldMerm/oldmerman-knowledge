@@ -12,7 +12,6 @@ from pydantic import BaseModel, Field
 from starlette.responses import StreamingResponse
 
 from agents import AgentsFactory, AgentType
-from agents.prompt import COMMON_PROMPT
 from agents.rerank.rerank_provider import rerank
 from agents.types import CommonContext
 from db import ChromaVectorHelper
@@ -41,18 +40,17 @@ async def chat(dto: OChatRequest, req: Request):
     param = factory.build_agent(AgentType.COMMON)
     documents = ChromaVectorHelper(collection_name=collection_name).query(client_ip, [user_prompt]).get("documents")
     # 重排序，根据系统配置判断，若不开启则会原样返回
-    ranked_document = rerank(user_prompt, ListSeparator.convert_str_list(documents), client_ip)
+    ranked_document = await rerank(user_prompt, ListSeparator.convert_str_list(documents), client_ip)
 
-    # 构建系统提示词
-    system_msg = f"{COMMON_PROMPT}, Use this context:\n{ranked_document}"
+    # 构建提示词
+    prompt = f"参考文档: {ranked_document}, \n用户问题: {user_prompt}"
     # sign生成于前端(前端可重新生成使线程id过期)，后端拼接时间戳实现自动过期(1h)
     thread_id = f"{client_ip}-{dto.sign}-{datetime.datetime.now().strftime('%Y%m%d%H')}"
 
     async def generate_response():
         for chunk in param.agent.stream(
                 {"messages": [
-                    {"role": "system", "content": system_msg},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "user", "content": prompt}
                 ]},
                 {"configurable": {"thread_id": thread_id}},
                 context=CommonContext(user_id=client_ip, model_id=param.model_id, model_name=param.model_name),

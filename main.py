@@ -6,6 +6,7 @@ from starlette.middleware.cors import CORSMiddleware
 import routes
 from config import get_settings
 from db import VectorDatabase, init_checkpointer, close_checkpointer, init_db, close_db
+from utils import AsyncHTTPClient
 from utils.logger import get_logger
 from middleware import AuthMiddleware
 from middleware.response_handler import ResponseWrapperMiddleware
@@ -27,6 +28,8 @@ async def lifespan(app: FastAPI):
     close_db()
     close_checkpointer()
     logger.info("数据库连接池已关闭")
+    await AsyncHTTPClient.close()
+    logger.info("HTTP异步客户端已关闭")
     VectorDatabase.reset()
 app = FastAPI(lifespan=lifespan)
 

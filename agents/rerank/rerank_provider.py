@@ -4,19 +4,43 @@
 Date: 2026-6-23
 Created by oldmerman
 """
+import asyncio
+
+from common import BusinessException
 from config import get_settings
 from db.dao import ModelsRepository, TokensUsageRepository
 
-import requests
-
-from utils import get_logger, get_config_client
+from utils import get_logger, get_config_client, get_http_client
 
 logger = get_logger(__name__)
 Settings = get_settings()
 RERANK_CONFIG_KEY = "rerank_config"
 
 
-def set_rerank(model_id: int, user_id: str):
+def get_rerank_config():
+    return get_config_client().get_config(RERANK_CONFIG_KEY)
+
+def set_rerank(user_id: str, **kwargs):
+    """
+    重排序相关匹配，支持设置重排序模型，重排序的启用，禁用
+
+    :param user_id: 操作管理员的唯一标识
+    :param kwargs: {"enabled": bool(True为开启重排序), "model_id": int(若enabled为True，则必须指定使用的重排序模型) }
+    :return:
+    """
+    isEnabled = kwargs.get("enabled", False)
+    client = get_config_client()
+
+    if not isEnabled:
+        logger.info(f"管理员：{user_id}，禁用重排序生效")
+        client.set_config(RERANK_CONFIG_KEY, {"rerank.enabled": False}, user_id)
+        return
+
+    model_id = kwargs.get("model_id")
+    if not model_id:
+        logger.warning(f"不存在Rerank模型：{model_id}")
+        raise BusinessException(f"不存在Rerank模型：{model_id}")
+
     dao = ModelsRepository.as_dependency()
     model_param = dao.select_model(model_id)
     metadata = {
@@ -29,12 +53,13 @@ def set_rerank(model_id: int, user_id: str):
     get_config_client().set_config(RERANK_CONFIG_KEY, metadata, user_id,"重排序模型的相关配置，如是否开启，请求所需数据等")
 
 
-def rerank(query: str, documents: list[str], user_id: str):
+async def rerank(query: str, documents: list[str], user_id: str):
     metadata = get_config_client().get_config(RERANK_CONFIG_KEY)
     if not metadata.get("rerank.enabled"):
         return documents
 
     # 获取数据，构造请求体
+    logger.info(f"用户: {user_id}请求重排序, query_text: {query}")
     api_key = metadata.get("api_key", "")
     url = metadata.get("base_url", "")
     model = metadata.get("model", "")
@@ -54,7 +79,8 @@ def rerank(query: str, documents: list[str], user_id: str):
         "Content-Type": "application/json"
     }
 
-    response = requests.post(url=url, json=payload, headers=headers)
+    client = get_http_client()
+    response = await client.post(url=url, json=payload, headers=headers)
     if response.status_code == 200:
         # rerank正常响应，记录token消耗
         result = response.json()
@@ -110,5 +136,6 @@ if __name__ == "__main__":
         # 1. 高度相关 - 直接回答
         "预防高血压需要控制钠盐摄入，每日不超过5克，同时保持规律运动，每周至少150分钟中等强度有氧运动。",
     ]
-    ranked_document = rerank(m_query, m_documents, "f191749f-e9ed-4fcf-8a77-98a4d1a36f1c")
-    print(ranked_document)
+    # ranked_document = asyncio.run(rerank(m_query, m_documents, "f191749f-e9ed-4fcf-8a77-98a4d1a36f1c"))
+    rerank_config = get_rerank_config()
+    print(rerank_config)

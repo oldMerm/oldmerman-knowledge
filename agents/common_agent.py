@@ -2,7 +2,8 @@ from anyio.functools import lru_cache
 from langchain.agents import create_agent
 
 from agents.model_provider import ModelProvider
-from agents.tool import save_token_usage_to_db
+from agents.prompt import COMMON_PROMPT
+from agents.tool import trim_chat_messages, save_token_usage_to_db
 from agents.types import CommonContext, AgentParam
 from db.langgraph_checkpointer import get_checkpointer
 
@@ -23,7 +24,9 @@ def get_common_agent(model_id: int = None) -> AgentParam:
         agent=create_agent(
             model=model.model,
             context_schema=CommonContext,
+            system_prompt=COMMON_PROMPT,
             middleware=[
+                trim_chat_messages,
                 save_token_usage_to_db
             ],
             checkpointer=checkpointer
