@@ -7,8 +7,8 @@ Created by oldmerman
 from psycopg import sql
 
 from db.connection import get_db_connection
-from db.models import DateWithSumParam, TokensUsageCountParam
-from utils import get_logger
+from db.models import TokensUsageCountParam
+from common.utils import get_logger
 
 logger = get_logger(__name__)
 

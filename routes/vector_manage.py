@@ -13,9 +13,9 @@ from fastapi.params import Depends, Body
 from common import Result
 from db.models import VectorCollectionUpdateParam, VectorCollectionRenderParam
 from services.vector_manage_service import VectorManageService, get_vector_manage_service
-from utils import UserContext
+from common.utils import UserContext
 
-from utils.logger import get_logger
+from common.utils import get_logger
 
 logger = get_logger(__name__)
 

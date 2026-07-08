@@ -10,10 +10,9 @@ from typing import List
 from fastapi.params import Depends
 
 from db.dao.models_group_repository import ModelsGroupRepository
-from db.dao.models_repository import ModelsRepository
 from db.entities import ModelsGroup
 from db.models import ModelsGroupRender
-from utils.logger import get_logger
+from common.utils import get_logger
 
 
 

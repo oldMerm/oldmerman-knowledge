@@ -9,11 +9,10 @@ from typing import List
 
 from fastapi.params import Depends
 
-from db.dao import ModelTypeRepository, ModelTypeEnum
 from db.dao.models_repository import ModelsRepository
 from db.models import ModelRenderParam
 from db.models.models_param import ModelCreateParam
-from utils.logger import get_logger
+from common.utils import get_logger
 
 
 

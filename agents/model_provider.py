@@ -10,7 +10,7 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
 from db.dao.models_repository import ModelsRepository
-from utils import get_logger
+from common.utils import get_logger
 
 logger = get_logger(__name__)
 

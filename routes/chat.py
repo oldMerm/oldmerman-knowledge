@@ -15,7 +15,7 @@ from agents import AgentsFactory, AgentType
 from agents.rerank.rerank_provider import rerank
 from agents.types import CommonContext
 from db import ChromaVectorHelper
-from utils import get_logger, ListSeparator
+from common.utils import get_logger, ListSeparator
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/chat", tags=["agent"])
@@ -43,7 +43,7 @@ async def chat(dto: OChatRequest, req: Request):
     ranked_document = await rerank(user_prompt, ListSeparator.convert_str_list(documents), client_ip)
 
     # 构建提示词
-    prompt = f"参考文档: {ranked_document}, \n用户问题: {user_prompt}"
+    prompt = f"参考文档: {ranked_document}, \n用户输入: {user_prompt}"
     # sign生成于前端(前端可重新生成使线程id过期)，后端拼接时间戳实现自动过期(1h)
     thread_id = f"{client_ip}-{dto.sign}-{datetime.datetime.now().strftime('%Y%m%d%H')}"
 

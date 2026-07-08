@@ -12,7 +12,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
 from common.Result import Result
-from utils.jwt import verify_token
+from common.utils.jwt import verify_token
 
 EXCLUDED_PATHS = [
     "/",

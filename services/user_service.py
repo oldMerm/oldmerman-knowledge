@@ -2,7 +2,7 @@ from typing import Optional
 
 from db.connection import get_db_connection
 from db.entities.user import User, UserStatus
-from utils.logger import get_logger
+from common.utils import get_logger
 
 logger = get_logger("services.user")
 

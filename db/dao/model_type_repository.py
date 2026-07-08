@@ -13,8 +13,7 @@ from db.connection import get_db_connection
 from db.dao.common_repository import check_value_exists
 from db.entities.model_type import ModelType
 from db.models import ModelsWithTypeParam, ModelRenderParam1
-from utils import get_logger
-
+from common.utils import get_logger
 
 
 logger = get_logger(__name__)
@@ -102,9 +101,13 @@ class ModelTypeRepository:
                     return None
                 type_id = row[0]
 
-                query = sql.SQL("""SELECT m.id, m.model_name FROM models m 
-                                INNER JOIN {} mtl ON m.id = mtl.model_id 
-                                WHERE mtl.type_id = %s """).format(
+                query = sql.SQL("""SELECT m.id,
+                                          m.model_name,
+                                          mg.group_name
+                                   FROM models m
+                                            INNER JOIN {} mtl ON m.id = mtl.model_id
+                                            INNER JOIN models_group mg ON m.group_uuid = mg.group_uuid
+                                   WHERE mtl.type_id = %s;""").format(
                     sql.Identifier(self.link_table)
                 )
                 cur.execute(query, (type_id,))
@@ -116,7 +119,8 @@ class ModelTypeRepository:
                     models=[
                         ModelRenderParam1(
                             model_id=row[0],
-                            model_name=row[1]
+                            model_name=row[1],
+                            model_group_name=row[2],
                         )
                         for row in rows
                     ]

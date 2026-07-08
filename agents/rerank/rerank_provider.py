@@ -4,13 +4,12 @@
 Date: 2026-6-23
 Created by oldmerman
 """
-import asyncio
 
 from common import BusinessException
 from config import get_settings
 from db.dao import ModelsRepository, TokensUsageRepository
 
-from utils import get_logger, get_config_client, get_http_client
+from common.utils import get_logger, get_config_client, get_http_client
 
 logger = get_logger(__name__)
 Settings = get_settings()
@@ -25,7 +24,7 @@ def set_rerank(user_id: str, **kwargs):
     重排序相关匹配，支持设置重排序模型，重排序的启用，禁用
 
     :param user_id: 操作管理员的唯一标识
-    :param kwargs: {"enabled": bool(True为开启重排序), "model_id": int(若enabled为True，则必须指定使用的重排序模型) }
+    :param kwargs: { "enabled": bool(True为开启重排序), "model_id": int(enabled为True，必须指定使用的重排序模型) }
     :return:
     """
     isEnabled = kwargs.get("enabled", False)
@@ -51,6 +50,7 @@ def set_rerank(user_id: str, **kwargs):
         "api_key": model_param.api_key,
     }
     get_config_client().set_config(RERANK_CONFIG_KEY, metadata, user_id,"重排序模型的相关配置，如是否开启，请求所需数据等")
+    logger.info(f"管理员：{user_id}，启用重排序")
 
 
 async def rerank(query: str, documents: list[str], user_id: str):

@@ -6,8 +6,8 @@ from starlette.middleware.cors import CORSMiddleware
 import routes
 from config import get_settings
 from db import VectorDatabase, init_checkpointer, close_checkpointer, init_db, close_db
-from utils import AsyncHTTPClient
-from utils.logger import get_logger
+from common.utils import AsyncHTTPClient
+from common.utils import get_logger
 from middleware import AuthMiddleware
 from middleware.response_handler import ResponseWrapperMiddleware
 from middleware.exception_handler import register_exception_handlers
@@ -44,6 +44,7 @@ app.include_router(routes.api_simple_agent_router)
 app.include_router(routes.token_usage_router)
 app.include_router(routes.document_router)
 app.include_router(routes.chat_router)
+app.include_router(routes.system_config_router)
 
 # register middleware
 app.add_middleware(ResponseWrapperMiddleware)

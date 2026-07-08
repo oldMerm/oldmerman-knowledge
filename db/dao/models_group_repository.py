@@ -12,7 +12,7 @@ from db.connection import get_db_connection
 from db.dao.models_repository import ModelsRepository
 from db.entities import ModelsGroup
 from db.models import ModelsGroupRender
-from utils import get_logger, AESEncryptUtil
+from common.utils import get_logger, AESEncryptUtil
 
 
 

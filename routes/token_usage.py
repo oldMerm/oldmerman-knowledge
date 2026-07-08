@@ -12,7 +12,7 @@ from fastapi.params import Depends
 from common import Result
 from db.dao.tokens_usage_repository import TokensUsageRepository
 from db.models import TokensUsageCountParam
-from utils import get_logger
+from common.utils import get_logger
 
 logger = get_logger(__name__)
 

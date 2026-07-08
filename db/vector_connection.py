@@ -13,7 +13,7 @@ from chromadb.api import ClientAPI
 from agents.embedding import EmbeddingsGetterParam, get_embeddings_supported
 from config import get_settings
 from db.models import VectorCollectionCreateParam
-from utils import get_logger
+from common.utils import get_logger
 
 logger = get_logger(__name__)
 Settings = get_settings()

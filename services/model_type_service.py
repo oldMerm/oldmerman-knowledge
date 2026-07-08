@@ -5,14 +5,12 @@ Date: 2026-5-16
 Created by oldmerman
 """
 
-import logging
-from typing import List, Optional
+from typing import Optional
 
 from fastapi.params import Depends
 
 from db.dao.model_type_repository import ModelTypeRepository
-from db.models import ModelsWithTypeParam
-from utils.logger import get_logger
+from common.utils import get_logger
 
 
 

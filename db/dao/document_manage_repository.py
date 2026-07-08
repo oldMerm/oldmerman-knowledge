@@ -9,7 +9,7 @@ from psycopg import sql
 from db.connection import get_db_connection
 from db.dao import VectorCollectionRepository
 from db.models import DocumentPageParam
-from utils import get_logger
+from common.utils import get_logger
 
 logger = get_logger(__name__)
 

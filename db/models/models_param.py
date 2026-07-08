@@ -12,6 +12,7 @@ class ModelRenderParam(BaseModel):
 class ModelRenderParam1(BaseModel):
     model_id: Optional[int] = None
     model_name: Optional[str] = None
+    model_group_name: Optional[str] = None
 
 class ModelRegisterParam(BaseModel):
     id: Optional[int] = None

@@ -12,7 +12,7 @@ from agents.embedding.alibaba_embedding import AlibabaEmbedding
 from agents.embedding.embedding_base import BaseEmbeddingAdapter
 from agents.embedding.embedding_common import EmbeddingsGetterParam, EmbeddingsResponseParam
 from agents.embedding.zhi_pu_embedding import ZhiPuEmbedding
-from utils import get_logger
+from common.utils import get_logger
 
 load_dotenv()
 logger = get_logger(__name__)

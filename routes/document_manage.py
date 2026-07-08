@@ -9,7 +9,7 @@ from fastapi.params import Depends
 
 from common import Result, Page
 from services.document_manage_service import DocumentManageService, get_document_manage_service
-from utils import get_logger
+from common.utils import get_logger
 
 logger = get_logger(__name__)
 

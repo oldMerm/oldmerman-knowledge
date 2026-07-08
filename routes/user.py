@@ -11,8 +11,8 @@ from common.Result import Result
 from db.models.user_param import UserSettingParam, UpdateUsernameRequest
 from services import get_user_service
 from services.user_service import UserService
-from utils import UserContext
-from utils.logger import get_logger
+from common.utils import UserContext
+from common.utils import get_logger
 
 logger = get_logger(__name__)
 
@@ -32,7 +32,7 @@ def get_user_setting(req: Request, service: UserService = Depends(get_user_servi
     phone = service.obfuscate_phone(user.phone)
     return Result.success(
         data=UserSettingParam(
-            user_uuid=user.user_uuid,
+            user_uuid=str(user.user_uuid),
             username=user.username,
             email=user.email,
             phone=phone,

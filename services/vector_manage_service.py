@@ -18,9 +18,9 @@ from db.dao.tokens_usage_repository import TokensUsageRepository
 from db.models import VectorCollectionRenderParam
 from db.models.vector_manage_param import VectorCollectionUpdateParam
 from db.vector_connection import ChromaVectorHelper
-from utils import language_separators
-from utils.file_processor import extract_text
-from utils.logger import get_logger
+from common.utils import language_separators
+from common.utils.file_processor import extract_text
+from common.utils import get_logger
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 

@@ -12,7 +12,7 @@ from db.connection import get_db_connection
 from db.dao.common_repository import check_value_exists
 from db.models import ModelRegisterParam
 from db.models.models_param import ModelRenderParam
-from utils import get_logger, AESEncryptUtil
+from common.utils import get_logger, AESEncryptUtil
 
 logger = get_logger(__name__)
 

@@ -10,7 +10,7 @@ from fastapi.params import Depends
 
 from common import Page
 from db.dao import DocumentsRepository
-from utils import get_logger
+from common.utils import get_logger
 
 logger = get_logger(__name__)
 

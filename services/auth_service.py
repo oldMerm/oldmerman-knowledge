@@ -13,8 +13,8 @@ from typing import Optional
 
 from db.connection import get_db_connection
 from db.entities.user import User, UserStatus
-from utils.jwt import create_token
-from utils.logger import get_logger
+from common.utils.jwt import create_token
+from common.utils import get_logger
 
 
 

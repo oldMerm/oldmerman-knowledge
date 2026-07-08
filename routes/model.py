@@ -12,11 +12,11 @@ from fastapi.params import Depends, Param, Body
 
 from common import Result
 from db.models import ModelRenderParam
-from db.models.models_param import ModelCreateParam, ModelsWithTypeParam
+from db.models.models_param import ModelCreateParam
 from services import get_model_service
 from services.model_service import ModelService
 
-from utils.logger import get_logger
+from common.utils import get_logger
 
 
 

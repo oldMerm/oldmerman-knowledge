@@ -17,7 +17,7 @@ from agents import AgentsFactory, AgentType
 from agents.tool.article_summary import ArticleContext
 from common import Result
 from db.connection import get_db_connection
-from utils.logger import get_logger
+from common.utils import get_logger
 
 
 load_dotenv()

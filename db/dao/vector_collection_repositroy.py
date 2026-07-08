@@ -16,7 +16,7 @@ from db.connection import get_db_connection
 from db.dao.common_repository import check_value_exists
 from db.entities.vector_collection import VectorCollection
 from db.models import VectorCollectionRenderParam
-from utils import get_logger
+from common.utils import get_logger
 
 logger = get_logger(__name__)
 

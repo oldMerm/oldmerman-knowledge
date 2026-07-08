@@ -15,7 +15,7 @@ from common.Result import Result
 from db.models import LoginResponse, RegisterRequest, LoginRequest
 from services import get_auth_service
 from services.auth_service import AuthService
-from utils.logger import get_logger
+from common.utils import get_logger
 
 
 

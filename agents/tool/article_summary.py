@@ -4,7 +4,7 @@ from langgraph.prebuilt import ToolRuntime
 
 from agents.types import ArticleContext
 from db.connection import get_db_connection
-from utils import get_logger
+from common.utils import get_logger
 
 logger = get_logger(__name__)
 

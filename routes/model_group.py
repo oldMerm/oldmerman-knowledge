@@ -15,7 +15,7 @@ from db.entities import ModelsGroup
 from db.models import ModelsGroupRender, ModelsGroupCreateParam
 from services import get_model_manage_service
 from services.model_group_service import ModelManageService
-from utils.logger import get_logger
+from common.utils import get_logger
 
 logger = get_logger(__name__)
 
