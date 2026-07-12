@@ -4,6 +4,7 @@
 Date: 2026-6-18
 Created by oldmerman
 """
+import contextvars
 import datetime
 import json
 
@@ -14,11 +15,15 @@ from starlette.responses import StreamingResponse
 from agents import AgentsFactory, AgentType
 from agents.rerank.rerank_provider import rerank
 from agents.types import CommonContext
+from common.utils.common_utils import agent_time_record
 from db import ChromaVectorHelper
 from common.utils import get_logger, ListSeparator
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/chat", tags=["agent"])
+
+# 定义上下文变量，提供外部（如装饰器）读取
+current_ai_metadata = contextvars.ContextVar("current_ai_metadata")
 
 
 class OChatRequest(BaseModel):
@@ -28,6 +33,7 @@ class OChatRequest(BaseModel):
 
 
 @router.post("")
+@agent_time_record
 async def chat(dto: OChatRequest, req: Request):
     user_prompt = dto.user_prompt
     collection_name = dto.collection_name
@@ -46,6 +52,9 @@ async def chat(dto: OChatRequest, req: Request):
     prompt = f"参考文档: {ranked_document}, \n用户输入: {user_prompt}"
     # sign生成于前端(前端可重新生成使线程id过期)，后端拼接时间戳实现自动过期(1h)
     thread_id = f"{client_ip}-{dto.sign}-{datetime.datetime.now().strftime('%Y%m%d%H')}"
+
+    # 设置上下文变量
+    current_ai_metadata.set({"thread_id": thread_id, "model_id": param.model_id, "user_prompt": user_prompt})
 
     async def generate_response():
         for chunk in param.agent.stream(

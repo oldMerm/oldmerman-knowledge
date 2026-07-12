@@ -109,7 +109,7 @@ if __name__ == "__main__":
     #     ids="e09b284b-d9bf-4404-887d-237479106d41"
     # )
     # print(p_res)
-    ChromaVectorHelper.delete_collection("text_collection")
+    print(ChromaVectorHelper("text_collection").collection.peek())
     # res = p_res.get("documents")
     #
     # m_documents = []

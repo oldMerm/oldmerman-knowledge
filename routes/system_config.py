@@ -21,6 +21,14 @@ class RerankSetter(BaseModel):
     model_id: Optional[int]
     is_enabled: bool = False
 
+
+@router.get("/model", response_model=Result)
+def get_models_config(service: SystemConfigService = Depends(get_system_config_service)):
+    return Result.success(
+        data=service.get_models_config()
+    )
+
+
 @router.get("/rerank", response_model=Result)
 def get_rerank_config(
         service: SystemConfigService = Depends(get_system_config_service)

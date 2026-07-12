@@ -19,13 +19,7 @@ from agents.types import ArticleContext, AgentParam
 @lru_cache(maxsize=2)
 def get_digest_agent(model_id: int = None) -> AgentParam:
     """获取文章摘要 Agent（自动缓存）"""
-    if model_id:
-        model = ModelProvider.get_model(model_id)
-    else:
-        # 默认模型可以配置化
-        model = ModelProvider.get_model(
-            model_name=ModelProvider.DEFAULT_MODEL_NAME,
-        )
+    model = ModelProvider.get_model(model_id)
     return AgentParam(
         agent=create_agent(
             model=model.model,

@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from agents import AgentsFactory, AgentType
 from agents.tool.article_summary import ArticleContext
 from common import Result
+from common.utils.common_utils import agent_time_record
 from db.connection import get_db_connection
 from common.utils import get_logger
 
@@ -24,7 +25,7 @@ load_dotenv()
 
 logger = get_logger(__name__)
 
-router = APIRouter(prefix="/v1", tags=["agent"])
+router = APIRouter(prefix="/v1", tags=["api"])
 
 
 class ArticleGenBody(BaseModel):
@@ -33,7 +34,9 @@ class ArticleGenBody(BaseModel):
     content: str
     model_id: str = None
 
+
 @router.post("")
+@agent_time_record
 async def chat(dto: ArticleGenBody):
     with get_db_connection() as conn:
         with conn.cursor() as cur:
@@ -51,12 +54,13 @@ async def chat(dto: ArticleGenBody):
             if row:
                 return Result.success(data=row[0])
 
+    user_prompt = dto.content
     async def generate_response():
         param = AgentsFactory().build_agent(AgentType.DIGEST)
         for chunk in param.agent.stream(
-                {"messages": [{"role": "user", "content": dto.content}]},
+                {"messages": [{"role": "user", "content": user_prompt}]},
                 context=ArticleContext(article_id=dto.article_id, article_name=dto.article_name,
-                                              model_id=param.model_id, model_name=param.model_name), # user_id可覆盖
+                                              model_id=param.model_id, model_name=param.model_name, user_id="merman-blog"), # user_id可覆盖
                 version="v2",
                 stream_mode="messages"
         ):
@@ -76,27 +80,3 @@ async def chat(dto: ArticleGenBody):
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache"}
     )
-
-
-if __name__ == "__main__":
-    # 打开文件并读取内容
-    with open(r'C:\Users\asus\Desktop\博客部署\文章\灰沙随水至 青田依水生.md', 'r', encoding='utf-8') as file:
-        content = file.read()
-
-    factory = AgentsFactory()
-    param = factory.build_agent(AgentType.DIGEST)
-    for chunk in param.agent.stream(
-            {"messages": [{"role": "user", "content": content}]},
-            context=ArticleContext(article_id="cc1babd11588417aac36f5472100f7c7", article_name="灰沙随水至 青田依水生",
-                                          model_id=param.model_id, model_name=param.model_name),
-            stream_mode="messages",
-            version="v2"
-    ):
-        if chunk["type"] == "messages":
-            token, metadata = chunk["data"]
-
-            if metadata.get('langgraph_node') == 'model':
-                text = getattr(token, 'content', '') or getattr(token, 'text', '')
-                if text:
-                    # 真实场景换成SSE向调用方响应一个个chunk即可
-                    print(text, end='', flush=True)

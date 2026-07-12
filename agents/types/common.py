@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 
 class CommonContext(BaseModel):
-    user_id: str = "11111111-1111-1111-1111-111111111111"
+    user_id: str
     model_id: int
     model_name: str
 

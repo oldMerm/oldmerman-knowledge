@@ -70,15 +70,16 @@ class ModelsRepository:
     def select_name_list(self, group_uuid: str) -> List[ModelRenderParam]:
         with get_db_connection() as conn:
             with conn.cursor() as cur:
-                query = sql.SQL("SELECT m.id as model_id,"
-                                "m.model_name as model_name,"
-                                "mt.id as type_id,"
-                                "mt.model_type_name as type_name "
-                                "FROM {} m "
-                                "LEFT JOIN model_type_link mtl ON m.id = mtl.model_id "
-                                "LEFT JOIN model_type mt ON mtl.type_id = mt.id "
-                                "WHERE m.group_uuid = %s "
-                                "ORDER BY m.id;").format(
+                query = sql.SQL("""SELECT m.id               as model_id,
+                                          m.model_name       as model_name,
+                                          mt.id              as type_id,
+                                          mt.model_type_name as type_name
+                                   FROM {} m 
+                                   LEFT JOIN model_type_link mtl
+                                   ON m.id = mtl.model_id
+                                       LEFT JOIN model_type mt ON mtl.type_id = mt.id
+                                   WHERE m.group_uuid = %s
+                                   ORDER BY m.id;""").format(
                     sql.Identifier(self.table)
                 )
                 cur.execute(query, (group_uuid,))
