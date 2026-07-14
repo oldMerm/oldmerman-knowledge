@@ -12,7 +12,7 @@ from db.connection import get_db_connection
 from db.dao.common_repository import check_value_exists
 from db.models import ModelRegisterParam
 from db.models.models_param import ModelRenderParam
-from common.utils import get_logger, AESEncryptUtil
+from common.utils import get_logger
 
 logger = get_logger(__name__)
 
@@ -27,6 +27,7 @@ class ModelsRepository:
 
     # 获取参数用以注册大模型
     def select_model(self, model_id: int) -> ModelRegisterParam:
+        from common.utils import AESEncryptUtil
         with get_db_connection() as conn:
             with conn.cursor() as cur:
                 query = sql.SQL("SELECT id, model_name, api_key, base_url FROM {} WHERE id = %s").format(

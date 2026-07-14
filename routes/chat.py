@@ -28,7 +28,6 @@ current_ai_metadata = contextvars.ContextVar("current_ai_metadata")
 
 class OChatRequest(BaseModel):
     user_prompt: str = Field(description="请求的内容")
-    collection_name: str = Field(description="选择的知识库名称")
     sign: str = Field(description="请求标识，随机的六位字符串")
 
 
@@ -36,15 +35,14 @@ class OChatRequest(BaseModel):
 @agent_time_record
 async def chat(dto: OChatRequest, req: Request):
     user_prompt = dto.user_prompt
-    collection_name = dto.collection_name
     client_ip = req.client.host  # 记录调用者ip地址
-    if user_prompt is None or collection_name is None:
+    if user_prompt is None:
         return None
 
     logger.info(f"用户: {client_ip} 请求， prompt: {user_prompt}")
     factory = AgentsFactory()
     param = factory.build_agent(AgentType.COMMON)
-    documents = ChromaVectorHelper(collection_name=collection_name).query(client_ip, [user_prompt]).get("documents")
+    documents = ChromaVectorHelper().query(client_ip, [user_prompt]).get("documents")
     # 重排序，根据系统配置判断，若不开启则会原样返回
     ranked_document = await rerank(user_prompt, ListSeparator.convert_str_list(documents), client_ip)
 

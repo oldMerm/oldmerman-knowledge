@@ -12,7 +12,7 @@ from db.connection import get_db_connection
 from db.dao.models_repository import ModelsRepository
 from db.entities import ModelsGroup
 from db.models import ModelsGroupRender
-from common.utils import get_logger, AESEncryptUtil
+from common.utils import get_logger
 
 
 
@@ -72,6 +72,7 @@ class ModelsGroupRepository:
 
 
     def create_group(self, group_name: str, group_attr: str = None, api_key: str = None, base_url: str = None) -> str:
+        from common.utils import AESEncryptUtil
         with get_db_connection() as conn:
             with conn.cursor() as cur:
                 query = sql.SQL("INSERT INTO {} (group_name, group_attr, api_key, base_url) VALUES (%s, %s, %s, %s) RETURNING group_uuid").format(

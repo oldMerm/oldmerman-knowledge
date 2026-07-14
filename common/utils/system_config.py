@@ -71,9 +71,4 @@ def get_config_client() -> SystemConfig:
 
 if __name__ == "__main__":
     client = SystemConfig()
-    rerank_info = {
-        "api-key": "sk-dasdsadsadddddddddadsda",
-        "rerank.enable": True
-    }
-    client.set_config("rerank_config", rerank_info,
-                      "重排序模型的相关配置，如是否开启，模型选择等", str(uuid.uuid4()))
+    print(client.get_config("rerank_config"))

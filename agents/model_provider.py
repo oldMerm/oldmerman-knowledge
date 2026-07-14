@@ -10,6 +10,7 @@ from functools import lru_cache
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
+from config import SystemConfigConstants
 from db.dao.models_repository import ModelsRepository
 from common.utils import get_logger, get_config_client
 
@@ -21,25 +22,30 @@ class ModelCommonParam(BaseModel):
     model_name: str
     model: ChatOpenAI
 
+def set_default_model(user_id: str, model_id: int, is_enabled: bool = False):
+    client = get_config_client()
+    config_key = SystemConfigConstants.MODEL_CONFIG_KEY
+
+    if not is_enabled:
+        client.set_config(key=config_key, new_config={"is_enabled": False}, user_id=user_id)
+        logger.info(f"管理员：{user_id}, 禁用主模型")
+        return
+
+    dao = ModelsRepository.as_dependency()
+    param = dao.select_model(model_id=model_id)
+    config_dict = {
+        "is_enabled": True,
+        "base_url": param.base_url,
+        "api_key": param.api_key,
+        "model_name": param.model_name,
+        "model_id": param.id,
+        "updated_at": datetime.now().strftime("%Y%m%d%H%M%S")
+    }
+    client.set_config(key=config_key, new_config=config_dict,
+                                   user_id=user_id, description="默认使用的大语言模型")
+    logger.info(f"管理员：{user_id}，启用默认模型")
 
 class ModelProvider:
-
-    DEFAULT_MODEL_KEY = "default_model"
-
-    @classmethod
-    def set_default_model(cls, user_id: str, model_id: int):
-        dao = ModelsRepository.as_dependency()
-        param = dao.select_model(model_id=model_id)
-        config_dict = {
-            "is_enabled": True,
-            "base_url": param.base_url,
-            "api_key": param.api_key,
-            "model_name": param.model_name,
-            "model_id": param.model_id,
-            "updated_at": datetime.now()
-        }
-        get_config_client().set_config(key=cls.DEFAULT_MODEL_KEY, new_config=config_dict,
-                                       user_id=user_id, description="默认使用的大语言模型")
 
     @classmethod
     @lru_cache(maxsize=5)
@@ -49,9 +55,12 @@ class ModelProvider:
                   temperature: float = 1.2) -> ModelCommonParam:
         # 不传参，默认读取公共配置的模型
         if model_name is None and model_id is None:
-            config_dict = get_config_client().get_config(cls.DEFAULT_MODEL_KEY)
+            config_dict = get_config_client().get_config(SystemConfigConstants.MODEL_CONFIG_KEY)
 
-            assert config_dict is not None
+            if not config_dict:
+                logger.error("未配置默认的模型参数")
+                raise ValueError("未配置默认的模型参数")
+
             if config_dict.get("is_enabled"):
                 model_id = config_dict.get("model_id")
                 model_name = config_dict.get("model_name")

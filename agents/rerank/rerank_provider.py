@@ -4,8 +4,10 @@
 Date: 2026-6-23
 Created by oldmerman
 """
+from datetime import datetime
 
 from common import BusinessException
+from config.constants import SystemConfigConstants
 from config import get_settings
 from db.dao import ModelsRepository, TokensUsageRepository
 
@@ -13,11 +15,7 @@ from common.utils import get_logger, get_config_client, get_http_client
 
 logger = get_logger(__name__)
 Settings = get_settings()
-RERANK_CONFIG_KEY = "rerank_config"
 
-
-def get_rerank_config():
-    return get_config_client().get_config(RERANK_CONFIG_KEY)
 
 def set_rerank(user_id: str, **kwargs):
     """
@@ -27,12 +25,13 @@ def set_rerank(user_id: str, **kwargs):
     :param kwargs: { "enabled": bool(True为开启重排序), "model_id": int(enabled为True，必须指定使用的重排序模型) }
     :return:
     """
-    isEnabled = kwargs.get("enabled", False)
+    is_enabled = kwargs.get("enabled", False)
     client = get_config_client()
 
-    if not isEnabled:
+    if not is_enabled:
         logger.info(f"管理员：{user_id}，禁用重排序生效")
-        client.set_config(RERANK_CONFIG_KEY, {"rerank.enabled": False}, user_id)
+        client.set_config(SystemConfigConstants.RERANK_CONFIG_KEY,
+                          {"rerank.enabled": False, "updated_at": datetime.now().strftime("%Y%m%d%H%M%S")}, user_id)
         return
 
     model_id = kwargs.get("model_id")
@@ -48,13 +47,15 @@ def set_rerank(user_id: str, **kwargs):
         "model": model_param.model_name,
         "base_url": model_param.base_url,
         "api_key": model_param.api_key,
+        "updated_at": datetime.now().strftime("%Y%m%d%H%M%S")
     }
-    get_config_client().set_config(RERANK_CONFIG_KEY, metadata, user_id,"重排序模型的相关配置，如是否开启，请求所需数据等")
+    get_config_client().set_config(SystemConfigConstants.RERANK_CONFIG_KEY, metadata, user_id,
+                                   "重排序模型的相关配置，如是否开启，请求所需数据等")
     logger.info(f"管理员：{user_id}，启用重排序")
 
 
 async def rerank(query: str, documents: list[str], user_id: str):
-    metadata = get_config_client().get_config(RERANK_CONFIG_KEY)
+    metadata = get_config_client().get_config(SystemConfigConstants.RERANK_CONFIG_KEY)
     if not metadata.get("rerank.enabled"):
         return documents
 
@@ -66,7 +67,7 @@ async def rerank(query: str, documents: list[str], user_id: str):
     model_id = metadata.get("model_id", 0)
     if not url or not model or not api_key or not model_id:
         metadata = {"rerank.enabled": False}
-        get_config_client().set_config(RERANK_CONFIG_KEY, metadata, "system")
+        get_config_client().set_config(SystemConfigConstants.RERANK_CONFIG_KEY, metadata, "system")
         return documents
     payload = {
         "model": model,
@@ -137,5 +138,4 @@ if __name__ == "__main__":
         "预防高血压需要控制钠盐摄入，每日不超过5克，同时保持规律运动，每周至少150分钟中等强度有氧运动。",
     ]
     # ranked_document = asyncio.run(rerank(m_query, m_documents, "f191749f-e9ed-4fcf-8a77-98a4d1a36f1c"))
-    rerank_config = get_rerank_config()
     print(rerank_config)

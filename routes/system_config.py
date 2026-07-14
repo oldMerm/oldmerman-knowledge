@@ -17,33 +17,25 @@ from services.system_config_service import SystemConfigService, get_system_confi
 router = APIRouter(prefix="/system_config", tags=["系统配置"])
 
 
-class RerankSetter(BaseModel):
-    model_id: Optional[int]
+class ModelConfigSetter(BaseModel):
+    model_id: Optional[int | str]
+    model_type: int
     is_enabled: bool = False
 
 
 @router.get("/model", response_model=Result)
-def get_models_config(service: SystemConfigService = Depends(get_system_config_service)):
+def get_models_config(model_type: Optional[int],
+                      service: SystemConfigService = Depends(get_system_config_service)):
     return Result.success(
-        data=service.get_models_config()
+        data=service.get_models_config(model_type)
     )
 
-
-@router.get("/rerank", response_model=Result)
-def get_rerank_config(
-        service: SystemConfigService = Depends(get_system_config_service)
-) -> Result[dict]:
-    return Result.success(
-        data=service.get_rerank_config()
-    )
-
-
-@router.post("/rerank", response_model=Result)
-def set_rerank_config(
-        setter: RerankSetter,
+@router.post("/model", response_model=Result)
+def set_model_config(
+        setter: ModelConfigSetter,
         req: Request,
         service: SystemConfigService = Depends(get_system_config_service)
 ):
        user_id = UserContext.get_user_id(req)
-       service.set_rerank(user_id, setter.model_id, setter.is_enabled)
+       service.set_models_config(user_id, setter.model_id, setter.is_enabled)
        return Result.success()

@@ -1,5 +1,5 @@
 """Description
-the sql to manage table named "vector_connection"
+the SQL to manage table named "vector_connection"
 
 Date: 2026-5-19
 Created by oldmerman
