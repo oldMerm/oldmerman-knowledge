@@ -36,6 +36,11 @@ class RequestTimeLogRepository:
                 row = cur.fetchone()
                 return row[0] if row else None
 
+    def get_time_logs(self):
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                query = sql.SQL("""SELECT *""")
+
 if __name__ == '__main__':
     rtlr = RequestTimeLogRepository()
     param = RequestTimeLog(thread_id="::1-aqhuj8-2026070221", total_duration=3.432, prompt="鱼人博客经历了多少个版本的迭代？", model_id=1003)

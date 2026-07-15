@@ -21,7 +21,6 @@ EXCLUDED_PATHS = [
     "/hello",
     "/openapi.json",
     "/auth/login", "/auth/register", # /routes/auth
-    "/model_type/vector-models",
     "/v1",
     "/chat"
 ]

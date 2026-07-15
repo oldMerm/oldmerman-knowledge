@@ -25,7 +25,7 @@ def set_rerank(user_id: str, **kwargs):
     :param kwargs: { "enabled": bool(True为开启重排序), "model_id": int(enabled为True，必须指定使用的重排序模型) }
     :return:
     """
-    is_enabled = kwargs.get("enabled", False)
+    is_enabled = kwargs.get("is_enabled", False)
     client = get_config_client()
 
     if not is_enabled:
@@ -138,4 +138,3 @@ if __name__ == "__main__":
         "预防高血压需要控制钠盐摄入，每日不超过5克，同时保持规律运动，每周至少150分钟中等强度有氧运动。",
     ]
     # ranked_document = asyncio.run(rerank(m_query, m_documents, "f191749f-e9ed-4fcf-8a77-98a4d1a36f1c"))
-    print(rerank_config)

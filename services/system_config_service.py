@@ -42,13 +42,13 @@ class SystemConfigService:
             raise ValueError(f"不存在功能类型： {model_type}")
 
 
-    def set_models_config(self, user_id, model_type, is_enabled: bool = False, model_id: Any = None):
+    def set_models_config(self, user_id, model_type: int = 1, is_enabled: bool = False, model_id: Any = None):
         if model_type == ModelTypeEnum.CHAT.value:
-            set_default_model(user_id, model_id=model_id, is_enabled=is_enabled)
+            set_default_model(user_id, model_id=int(model_id), is_enabled=is_enabled)
         elif model_type == ModelTypeEnum.EMBEDDING.value:
             set_default_knowledge(user_id, collection_name=model_id, is_enabled=is_enabled)
         elif model_type == ModelTypeEnum.RERANK.value:
-            set_rerank(user_id, model_id=model_id, is_enabled=is_enabled)
+            set_rerank(user_id, model_id=int(model_id), is_enabled=is_enabled)
         else:
             logger.info(f"不存在功能类型： {model_type}")
             raise ValueError(f"不存在功能类型： {model_type}")

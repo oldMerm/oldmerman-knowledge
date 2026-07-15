@@ -30,6 +30,7 @@ def get_models_config(model_type: Optional[int],
         data=service.get_models_config(model_type)
     )
 
+
 @router.post("/model", response_model=Result)
 def set_model_config(
         setter: ModelConfigSetter,
@@ -37,5 +38,5 @@ def set_model_config(
         service: SystemConfigService = Depends(get_system_config_service)
 ):
        user_id = UserContext.get_user_id(req)
-       service.set_models_config(user_id, setter.model_id, setter.is_enabled)
+       service.set_models_config(user_id, setter.model_type, setter.is_enabled, setter.model_id)
        return Result.success()

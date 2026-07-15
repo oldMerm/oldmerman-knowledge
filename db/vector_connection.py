@@ -72,7 +72,7 @@ class ChromaVectorHelper:
 
         self.client = get_vector_database()
         if not collection_name:
-            if _default_collection_name is None:
+            if not _default_collection_name:
                 config_dict = get_config_client().get_config(key=SystemConfigConstants.EMBEDDING_CONFIG_KEY)
                 if config_dict:
                     _default_collection_name = config_dict.get("collection_name")
