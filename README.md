@@ -16,17 +16,16 @@ Python + FastAPI + PostgreSQL + ChromaDB(前端见仓库：https://github.com/ol
 
 **1**.目录结构
 
-| 目录名称       | 作用概述                   |
+| 目录名称       |          作用概述          |
 |:----------:|:----------------------:|
-| main.py    | 程序主入口，配置路由，中间件         |
+| main.py    |     程序主入口，配置路由，中间件     |
 | agents     | Agent核心部件，prompt，tool等 |
-| common     | Web统一响应封装              |
-| config     | 项目部分配置(数据库连接参数等)       |
-| db         | 数据库连接池，dao，数据库实体       |
-| middleware | Web端的中间件               |
-| routes     | Web路由                  |
-| services   | Web业务层代码               |
-| utils      | 项目使用的工具包               |
+| common     |    Web统一响应封装，工具封装等     |
+| config     |    项目部分配置(数据库连接参数等)    |
+| db         |    数据库连接池，dao，数据库实体    |
+| middleware |        Web端的中间件        |
+| routes     |         Web路由          |
+| services   |        Web业务层代码        |
 
 **2**.环境变量文件(目前)
 

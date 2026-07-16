@@ -12,3 +12,4 @@ class RequestTimeLogParam(BaseModel):
 class RequestTimeRenderParam(BaseModel):
     user_count: int = Field(default=0, description="用户总访问量")
     request_time_avg: float = Field(default=0, description="请求访问平均耗时")
+    created_at: datetime = Field(description="最近一次请求时间")

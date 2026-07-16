@@ -9,8 +9,8 @@ from typing import List
 from fastapi import APIRouter
 from fastapi.params import Depends
 
-from common import Result
-from db.models import TokensUsageCountParam
+from common import Result, Page
+from db.models import TokensUsageCountParam, RequestTimeLogParam, RequestTimeRenderParam
 from common.utils import get_logger
 from services.log_service import LogService, get_log_service
 
@@ -25,9 +25,17 @@ def get_tokens_usage(service: LogService = Depends(get_log_service)) -> Result[L
         data=service.get_tokens_usage() # 获取一个月内每日的token消耗
     )
 
-
-@router.get("/time_request")
-def get_request_time_log(service: LogService = Depends(get_log_service)) -> Result:
+@router.get("/request/count")
+def get_log_count(service: LogService = Depends(get_log_service)) -> Result[RequestTimeRenderParam]:
     return Result.success(
-        data=service.get_request_time_log()
+        data=service.get_log_count()
+    )
+
+
+@router.get("/request/page")
+def get_log_page(
+        current: int = 1, size: int = 10,
+        service: LogService = Depends(get_log_service)) -> Result[Page]:
+    return Result.success(
+        data=service.get_log_page(current, size)
     )
