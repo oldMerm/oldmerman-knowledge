@@ -38,6 +38,8 @@ class ArticleGenBody(BaseModel):
 @router.post("")
 @agent_time_record
 async def chat(dto: ArticleGenBody):
+    # 暂不启用
+    return None
     with get_db_connection() as conn:
         with conn.cursor() as cur:
             query = """

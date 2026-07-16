@@ -1,0 +1,32 @@
+version: '1.0.0'
+
+services:
+  # PostgreSQL 服务
+  db:
+    image: postgres:18.4
+    container_name: my-postgres
+    environment:
+      POSTGRES_USER: oldmerman
+      POSTGRES_PASSWORD: 111111
+      POSTGRES_DB: o_knowledge
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # 数据持久化
+    restart: unless-stopped
+
+  # FastAPI 应用服务
+  app:
+    build: .
+    container_name: oldmerman-knowledge
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.prod
+    depends_on:
+      - db
+    restart: unless-stopped
+
+# 数据卷声明（持久化 PostgreSQL 数据）
+volumes:
+  postgres_data:

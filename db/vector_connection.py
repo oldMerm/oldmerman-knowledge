@@ -4,7 +4,6 @@ the vector client about the project
 Date: 2026-5-19
 Created by oldmerman
 """
-from functools import lru_cache
 from typing import Any
 
 import chromadb
@@ -17,13 +16,7 @@ from common.utils import get_logger, get_config_client
 
 logger = get_logger(__name__)
 Settings = get_settings()
-
 _default_collection_name = None
-
-@lru_cache
-def get_vector_database() -> ClientAPI:
-    settings = get_settings()
-    return chromadb.PersistentClient(path=settings.VECTOR_PERSIST_URL)
 
 
 # ChromaDB向量库操作封装
@@ -32,7 +25,7 @@ class VectorDatabase:
 
     @classmethod
     def get_client(cls) -> ClientAPI:
-        path = get_settings().VECTOR_PERSIST_URL
+        path = Settings.VECTOR_PERSIST_URL
         if cls._instance is None:
             cls._instance = chromadb.PersistentClient(path=path)
         return cls._instance
@@ -60,17 +53,17 @@ class ChromaVectorHelper:
     # 显示创建集合
     @classmethod
     def create_collection(cls, name: str, metadata: dict[str, Any]):
-        get_vector_database().create_collection(name=name, metadata=metadata)
+        VectorDatabase.get_client().create_collection(name=name, metadata=metadata)
 
     @classmethod
     def delete_collection(cls, collection_name: str):
-        get_vector_database().delete_collection(collection_name)
+        VectorDatabase.get_client().delete_collection(collection_name)
 
     def __init__(self, collection_name = None):
         from db.dao import ModelsRepository, TokensUsageRepository
         global _default_collection_name
 
-        self.client = get_vector_database()
+        self.client = VectorDatabase.get_client()
         if not collection_name:
             if not _default_collection_name:
                 config_dict = get_config_client().get_config(key=SystemConfigConstants.EMBEDDING_CONFIG_KEY)
